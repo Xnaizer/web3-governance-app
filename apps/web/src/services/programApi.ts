@@ -63,3 +63,17 @@ export async function listProgramsAuthed(
   });
   return { programs: res.data.data, pagination: res.data.meta.pagination };
 }
+
+export interface MyProposalVoteRow {
+  votedAt: string;
+  txHash: string | null;
+  program: ProgramListItem;
+}
+
+/** The connected validator's full proposal-vote history (all statuses). */
+export async function getMyProposalVotes() {
+  const res = await api.get<Envelope<MyProposalVoteRow[]>>(
+    "/programs/my-proposal-votes",
+  );
+  return res.data.data;
+}

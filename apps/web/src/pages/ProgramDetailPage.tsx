@@ -12,6 +12,7 @@ import {
   Scale,
   ImageOff,
   Images,
+  Users,
 } from "lucide-react";
 import { ListShell } from "../components/layout/ListShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useProgram } from "../hooks/usePrograms";
 import { StatusChip, IntegrityChip } from "../components/StatusChip";
+import { UserCell } from "../components/UserCell";
 import { WithdrawalDetailModal } from "../components/ui/WithdrawalDetailModal";
 import { StatStrip } from "../components/ui/StatStrip";
 import { BrandLoader } from "../components/ui/BrandLoader";
@@ -329,6 +331,29 @@ export function ProgramDetailPage() {
               total={p.totalBudget}
             />
           </Section>
+
+          {p.isOnChain && p.proposalVoters.length > 0 && (
+            <Section
+              title="Validator yang Menyetujui"
+              eyebrow={`${p.proposalVoters.length} vote`}
+              icon={<Users className="h-4 w-4" />}
+              accent="#818CF8"
+            >
+              <div className="flex flex-col divide-y divide-black/5">
+                {p.proposalVoters.map((v) => (
+                  <div
+                    key={v.wallet}
+                    className="flex flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <UserCell user={v.user} wallet={v.wallet} />
+                    <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDate(v.votedAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
 
           {p.pic && (
             <Card className="rounded-2xl border-black/5 shadow-none">

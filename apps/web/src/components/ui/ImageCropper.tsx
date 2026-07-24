@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Move, ZoomIn } from "lucide-react";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 interface ImageCropperProps {
   file: File | null;
-  aspect: number; 
+  aspect: number; // width / height, e.g. 1 for avatar, 3 for banner
   title?: string;
   outputWidth?: number;
   isSaving?: boolean;
@@ -19,9 +19,14 @@ interface ImageCropperProps {
   onSave: (result: { blob: Blob; file: File }) => void;
 }
 
-const BOX_MAX_W = 480;
+const BOX_MAX_W = 420;
 
-
+/**
+ * Lightweight crop/resize tool (no external deps): shows the source photo
+ * inside a fixed-aspect box, lets the user drag to reposition and use a
+ * slider to zoom, then rasterizes the visible crop to a canvas at a fixed
+ * output size so avatars/banners always come out consistently sized.
+ */
 export function ImageCropper({
   file,
   aspect,
@@ -35,16 +40,30 @@ export function ImageCropper({
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [boxW, setBoxW] = useState(BOX_MAX_W);
   const dragRef = useRef<{
     startX: number;
     startY: number;
     origX: number;
     origY: number;
   } | null>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const boxW = BOX_MAX_W;
-  const boxH = BOX_MAX_W / aspect;
+  const boxH = boxW / aspect;
+
+  // The crop box is measured off a full-width responsive wrapper (capped at
+  // BOX_MAX_W) so it never overflows the dialog on narrow screens — all the
+  // offset/zoom/canvas math below stays in real pixels against this value.
+  useLayoutEffect(() => {
+    if (!file) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+    const measure = () => setBoxW(Math.min(BOX_MAX_W, el.clientWidth));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [file]);
 
   useEffect(() => {
     if (!file) {
@@ -58,6 +77,7 @@ export function ImageCropper({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // base scale so the image always fully covers the crop box at zoom=1
   const baseScale = useMemo(() => {
     if (!naturalSize.w || !naturalSize.h) return 1;
     return Math.max(boxW / naturalSize.w, boxH / naturalSize.h);
@@ -107,6 +127,7 @@ export function ImageCropper({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
+      // Map the visible crop-box region (in displayed px) back to source px.
       const outScale = outputWidth / boxW;
       const srcScale = scale;
       ctx.save();
@@ -132,7 +153,7 @@ export function ImageCropper({
 
   return (
     <Dialog open={!!file} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="max-w-lg rounded-2xl">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md gap-5 rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display tracking-tight">
             {title}
@@ -141,36 +162,37 @@ export function ImageCropper({
 
         {imgUrl && (
           <div className="flex flex-col gap-4">
-            <div
-              ref={boxRef}
-              className="relative mx-auto overflow-hidden rounded-lg border border-black/10 bg-muted/40 touch-none select-none"
-              style={{ width: boxW, height: boxH }}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerLeave={onPointerUp}
-            >
-              <img
-                src={imgUrl}
-                alt="preview"
-                draggable={false}
-                onLoad={(e) => {
-                  const t = e.currentTarget;
-                  setNaturalSize({ w: t.naturalWidth, h: t.naturalHeight });
-                }}
-                className="pointer-events-none absolute left-1/2 top-1/2"
-                style={{
-                  width: displayW || undefined,
-                  height: displayH || undefined,
-                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px)`,
-                }}
-              />
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-1 text-[11px] font-medium text-white/70 opacity-0 transition-opacity hover:opacity-100">
-                <Move className="h-3.5 w-3.5" /> Geser untuk atur posisi
+            <div ref={wrapperRef} className="mx-auto w-full">
+              <div
+                className="relative mx-auto touch-none select-none overflow-hidden rounded-lg border border-black/10 bg-muted/40"
+                style={{ width: boxW, height: boxH }}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerLeave={onPointerUp}
+              >
+                <img
+                  src={imgUrl}
+                  alt="preview"
+                  draggable={false}
+                  onLoad={(e) => {
+                    const t = e.currentTarget;
+                    setNaturalSize({ w: t.naturalWidth, h: t.naturalHeight });
+                  }}
+                  className="pointer-events-none absolute left-1/2 top-1/2 max-w-none"
+                  style={{
+                    width: displayW || undefined,
+                    height: displayH || undefined,
+                    transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px)`,
+                  }}
+                />
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-1 text-[11px] font-medium text-white/70 opacity-0 transition-opacity hover:opacity-100">
+                  <Move className="h-3.5 w-3.5" /> Geser untuk atur posisi
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 px-1">
+            <div className="flex items-center gap-3">
               <ZoomIn className="h-4 w-4 shrink-0 text-muted-foreground" />
               <input
                 type="range"

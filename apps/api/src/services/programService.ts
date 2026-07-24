@@ -9,6 +9,14 @@ import type { ListProgramQuery } from "../validators/programValidator";
 
 const MIN_VALIDATORS = 3;
 const REPUTATION_BLOCKED = 35;
+const USER_MINI = {
+  id: true,
+  name: true,
+  username: true,
+  walletAddress: true,
+  profilePictureURL: true,
+  role: true,
+} as const;
 const PUBLIC_PROGRAM_SELECT = {
   programId: true,
   programHash: true,
@@ -244,6 +252,31 @@ export async function listPrograms(
   });
 }
 
+async function resolveProposalVoters(programId: number) {
+  const logs = await prisma.proposalVoteLog.findMany({
+    where: { programId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (logs.length === 0) return [];
+
+  const wallets = [...new Set(logs.map((l) => l.voterWallet.toLowerCase()))];
+  const users = await prisma.user.findMany({
+    where: { walletAddress: { in: wallets } },
+    select: USER_MINI,
+  });
+  const byWallet = new Map(
+    users.map((u) => [u.walletAddress!.toLowerCase(), u]),
+  );
+
+  return logs.map((l) => ({
+    wallet: l.voterWallet,
+    votedAt: l.createdAt,
+    txHash: l.txHash,
+    user: byWallet.get(l.voterWallet.toLowerCase()) ?? null,
+  }));
+}
+
 export async function getProgramById(programId: number) {
   const cacheKey = `program:detail:${programId}`;
 
@@ -318,7 +351,9 @@ export async function getProgramById(programId: number) {
       throw new AppError("Program not found", 404);
     }
 
-    return program;
+    const proposalVoters = await resolveProposalVoters(programId);
+
+    return { ...program, proposalVoters };
   });
 }
 
@@ -403,4 +438,47 @@ export async function getSubmissionPayload(userId: string, programId: number) {
     programHash,
     milestoneCount: program.milestoneCount,
   };
+}
+
+/**
+ * Full proposal-vote history for the connected validator — every program
+ * they've ever cast a BFT approval vote on, regardless of whether that
+ * program is still PENDING or has since moved to APPROVED/REJECTED/etc.
+ * (the on-chain `hasVotedProposal` check alone can't answer this once a
+ * program leaves the PENDING list).
+ */
+export async function getMyProposalVotes(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { walletAddress: true },
+  });
+
+  if (!user?.walletAddress) {
+    return [];
+  }
+
+  const logs = await prisma.proposalVoteLog.findMany({
+    where: { voterWallet: user.walletAddress.toLowerCase() },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (logs.length === 0) return [];
+
+  const programIds = logs.map((l) => l.programId);
+  const programs = await prisma.program.findMany({
+    where: { programId: { in: programIds } },
+    select: {
+      ...PUBLIC_PROGRAM_SELECT,
+      pic: { select: USER_MINI },
+    },
+  });
+  const byId = new Map(programs.map((p) => [p.programId, p]));
+
+  return logs
+    .map((l) => ({
+      votedAt: l.createdAt,
+      txHash: l.txHash,
+      program: byId.get(l.programId) ?? null,
+    }))
+    .filter((row) => row.program !== null);
 }

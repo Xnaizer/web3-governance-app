@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { FormInput, FormTextarea } from "../../components/ui/FormField";
-import { SkeletonList } from "../../components/ui/Skeleton";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ImageOff, ImagePlus, Pencil, Trash2, Wallet } from "lucide-react";
 import { ZoomableImage, Lightbox } from "../../components/ui/Lightbox";
@@ -405,7 +405,7 @@ export function ProgramManagePage() {
     setPending(null);
   };
 
-  if (isLoading) return <SkeletonList />;
+  if (isLoading) return <BrandLoader />;
   if (!p) return <p>Program tidak ditemukan.</p>;
 
   const activeMilestone =

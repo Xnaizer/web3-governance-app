@@ -39,13 +39,13 @@ export function WithdrawalChart({
           {formatIDR(String(total))}
         </span>
       </div>
-      <div className="flex h-36 items-end gap-1.5 overflow-x-auto pb-1">
+      <div className="flex h-36 items-stretch gap-1.5 overflow-x-auto pb-1">
         {ordered.map((w, i) => {
           const h = Math.max(4, (amounts[i] / max) * 100);
           return (
             <div
               key={w.id}
-              className="group relative flex min-w-[10px] flex-1 flex-col items-center justify-end"
+              className="group relative flex h-full min-w-[10px] flex-1 flex-col items-center justify-end"
               title={`${formatIDR(w.amount)} · ${w.recipientName ?? "—"} · ${formatDate(w.timestamp)}`}
             >
               <div

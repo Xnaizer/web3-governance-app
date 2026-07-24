@@ -390,6 +390,18 @@ model RoleChangeLog {
   @@index([actorWallet])
 }
 
+model ProposalVoteLog {
+  id          String   @id @default(cuid())
+  programId   Int
+  voterWallet String
+  txHash      String?
+  createdAt   DateTime @default(now())
+
+  @@unique([programId, voterWallet])
+  @@index([programId])
+  @@index([voterWallet])
+}
+
 model JobRun {
   name      String   @id
   lastRunAt DateTime

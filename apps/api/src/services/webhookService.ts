@@ -162,14 +162,26 @@ async function handleProposalSubmitted(
 
 export async function handleProposalVoted(
   args: Record<string, unknown>,
-  _txHash?: string,
+  txHash?: string,
 ): Promise<{ result: string; programId: number }> {
   const programId = Number(args.programId);
   const currentVotes = Number(args.currentVotes);
+  const validator = String(args.validator ?? "").toLowerCase();
 
   console.log(
     `[WEBHOOK] ProposalVoted program ${programId}, votes: ${currentVotes}`,
   );
+
+  if (validator) {
+    await prisma.proposalVoteLog.upsert({
+      where: {
+        programId_voterWallet: { programId, voterWallet: validator },
+      },
+      update: { txHash: txHash ?? undefined },
+      create: { programId, voterWallet: validator, txHash },
+    });
+    await invalidateProgramCache(programId);
+  }
 
   return { result: "PROPOSAL_VOTED_LOGGED", programId };
 }

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
+import { BrandLoader } from "@/components/ui/BrandLoader";
 import { ImageCropper } from "@/components/ui/ImageCropper";
 import { ZoomableImage } from "@/components/ui/Lightbox";
 import { useMe } from "../hooks/useAuth";
@@ -70,7 +71,7 @@ export function ProfilePage() {
       : undefined,
   });
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <BrandLoader />;
   if (!me) return null;
 
   const onSubmit = handleSubmit(async (values) => {
