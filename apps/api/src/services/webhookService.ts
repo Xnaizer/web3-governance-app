@@ -8,6 +8,8 @@ import {
   resolveAuditorUserId,
 } from "./reputationService";
 import { sanitizeText } from "../utils/sanitize";
+import { getOnChainProposal, PROPOSAL_STATUS_BY_INDEX } from "./contractService";
+import { deriveTab } from "./reconciliationService";
 
 
 export interface DecodedEvent {
@@ -415,6 +417,28 @@ export async function handleWithdrawalLogged(
       programId,
     },
   });
+
+  const onChain = await getOnChainProposal(programId);
+  if (onChain) {
+    const onChainStatus = PROPOSAL_STATUS_BY_INDEX[onChain.status] ?? existing.status;
+    const onChainMilestone = Number(onChain.currentMilestone);
+    const onChainAllocated = onChain.totalAllocatedSoFar.toString();
+
+    const data: Record<string, unknown> = {};
+    if (existing.status !== onChainStatus) {
+      data.status = onChainStatus;
+      const targetTab = deriveTab(onChainStatus);
+      if (existing.displayTab !== targetTab) data.displayTab = targetTab;
+    }
+    if (existing.currentMilestone !== onChainMilestone)
+      data.currentMilestone = onChainMilestone;
+    if (existing.totalAllocatedSoFar !== onChainAllocated)
+      data.totalAllocatedSoFar = onChainAllocated;
+
+    if (Object.keys(data).length > 0) {
+      await prisma.program.update({ where: { programId }, data });
+    }
+  }
 
   await invalidateProgramCache(programId);
 

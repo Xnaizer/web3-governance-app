@@ -25,6 +25,16 @@ export interface OnChainRedemption {
   status: number; 
 }
 
+export const PROPOSAL_STATUS_BY_INDEX = [
+  "PENDING",
+  "APPROVED",
+  "DRAWABLE",
+  "MILESTONE_ACHIEVED",
+  "FROZEN",
+  "COMPLETED",
+  "FRAUD_CONFIRMED",
+] as const;
+
 const ZERO_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 

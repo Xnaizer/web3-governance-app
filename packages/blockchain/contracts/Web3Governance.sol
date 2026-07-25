@@ -637,6 +637,7 @@ contract Web3Governance is EIP712, AccessControl {
 
         if (prop.currentAllocatedBalance == 0) {
             prop.status = ProposalStatus.MILESTONE_ACHIEVED;
+            emit MilestoneFinalized(programId, prop.currentMilestone - 1);
 
             if (prop.currentMilestone == prop.milestoneCount) {
                 prop.status = ProposalStatus.COMPLETED;

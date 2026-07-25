@@ -1,20 +1,12 @@
 import { prisma } from "../lib/prisma";
 import { computeProgramHash } from "@repo/shared";
-import { getOnChainProposal } from "./contractService";
+import { getOnChainProposal, PROPOSAL_STATUS_BY_INDEX } from "./contractService";
 import { invalidate, invalidatePattern } from "../lib/cache";
 import { Prisma, type ProposalStatus } from "@repo/database";
 
-const STATUS_BY_INDEX: ProposalStatus[] = [
-  "PENDING",
-  "APPROVED",
-  "DRAWABLE",
-  "MILESTONE_ACHIEVED",
-  "FROZEN",
-  "COMPLETED",
-  "FRAUD_CONFIRMED",
-];
+const STATUS_BY_INDEX: readonly ProposalStatus[] = PROPOSAL_STATUS_BY_INDEX;
 
-function deriveTab(
+export function deriveTab(
   status: string,
 ): "ACTIVE" | "FINISHED" | "FLAGGED" | "FRAUD" {
   if (status === "COMPLETED") return "FINISHED";
