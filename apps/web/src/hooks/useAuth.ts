@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDisconnect } from "wagmi";
 import * as authApi from "../services/authApi";
 import type { AuthUser } from "../types/auth";
-import { hasSessionHint } from "../utils/cookie";
 
 export function useMe() {
   return useQuery<AuthUser | null>({
@@ -14,13 +13,6 @@ export function useMe() {
         return null;
       }
     },
-    // Skip the request entirely when there's no session hint cookie — a
-    // fresh/logged-out visitor has no "token" cookie either (it's httpOnly
-    // so we can't read it directly, but "has_session" is set/cleared
-    // alongside it by the API), so GET /auth/me would just 401 anyway.
-    // Login/register set query data directly on success, so this doesn't
-    // block that flow.
-    enabled: hasSessionHint(),
     staleTime: 60_000,
     retry: false,
   });
