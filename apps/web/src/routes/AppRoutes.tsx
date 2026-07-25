@@ -72,6 +72,11 @@ const VoteDetailPage = lazy(() =>
     default: m.VoteDetailPage,
   })),
 );
+const ProgramVotesPage = lazy(() =>
+  import("../pages/public/ProgramVotesPage").then((m) => ({
+    default: m.ProgramVotesPage,
+  })),
+);
 const RedemptionsPage = lazy(() =>
   import("../pages/public/RedemptionsPage").then((m) => ({
     default: m.RedemptionsPage,
@@ -162,6 +167,10 @@ export function AppRoutes() {
         <Route path="/governance/roles" element={<RoleLogsPage />} />
         <Route path="/governance/votes" element={<VotesPage />} />
         <Route path="/governance/votes/:id" element={<VoteDetailPage />} />
+        <Route
+          path="/governance/program-votes"
+          element={<ProgramVotesPage />}
+        />
         <Route path="/gateway/redemptions" element={<RedemptionsPage />} />
         <Route
           path="/register"

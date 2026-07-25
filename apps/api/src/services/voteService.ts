@@ -156,6 +156,87 @@ export async function listUnfreezeVotes(page: number, limit: number) {
       prisma.unfreezeVote.count(),
     ]);
 
+    const programs = votes.length
+      ? await prisma.program.findMany({
+          where: { programId: { in: votes.map((v) => v.programId) } },
+          select: {
+            programId: true,
+            title: true,
+            status: true,
+            totalBudget: true,
+            picWallet: true,
+            pic: { select: USER_MINI },
+          },
+        })
+      : [];
+    const byId = new Map(programs.map((p) => [p.programId, p]));
+
+    return {
+      votes: votes.map((v) => ({ ...v, program: byId.get(v.programId) ?? null })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  });
+}
+
+
+export async function listProposalVotes(page: number, limit: number) {
+  const cacheKey = `votes:proposal:list:${page}:${limit}`;
+
+  return cacheAside(cacheKey, 30, async () => {
+    const logs = await prisma.proposalVoteLog.findMany({
+      select: { programId: true, createdAt: true },
+    });
+
+    const byProgram = new Map<number, { count: number; lastVotedAt: Date }>();
+    for (const l of logs) {
+      const existing = byProgram.get(l.programId);
+      if (existing) {
+        existing.count += 1;
+        if (l.createdAt > existing.lastVotedAt) existing.lastVotedAt = l.createdAt;
+      } else {
+        byProgram.set(l.programId, { count: 1, lastVotedAt: l.createdAt });
+      }
+    }
+
+    const allProgramIds = [...byProgram.keys()].sort(
+      (a, b) =>
+        byProgram.get(b)!.lastVotedAt.getTime() -
+        byProgram.get(a)!.lastVotedAt.getTime(),
+    );
+
+    const total = allProgramIds.length;
+    const start = (page - 1) * limit;
+    const pageIds = allProgramIds.slice(start, start + limit);
+
+    const programs = pageIds.length
+      ? await prisma.program.findMany({
+          where: { programId: { in: pageIds } },
+          select: {
+            programId: true,
+            title: true,
+            status: true,
+            totalBudget: true,
+            picWallet: true,
+            pic: { select: USER_MINI },
+          },
+        })
+      : [];
+    const byId = new Map(programs.map((p) => [p.programId, p]));
+
+    const votes = pageIds
+      .map((id) => ({
+        programId: id,
+        voteCount: byProgram.get(id)!.count,
+        lastVotedAt: byProgram.get(id)!.lastVotedAt,
+        program: byId.get(id) ?? null,
+      }))
+      .filter((v) => v.program !== null);
+
     return {
       votes,
       pagination: {

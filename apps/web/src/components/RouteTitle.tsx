@@ -16,6 +16,7 @@ const TITLES: ReadonlyArray<readonly [string, string]> = [
   ["/governance/roles", "Log Peran"],
   ["/governance/votes", "Voting"],
   ["/governance/votes/:id", "Detail Voting"],
+  ["/governance/program-votes", "Voting Program"],
   ["/gateway/redemptions", "Pencairan"],
   ["/register", "Daftar"],
   ["/login", "Masuk"],

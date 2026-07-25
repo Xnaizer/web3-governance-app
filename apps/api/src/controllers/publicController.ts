@@ -102,6 +102,16 @@ export default {
     response.success(res, vote);
   },
 
+  // GET /api/v1/public/proposal-votes
+  async listProposalVotes(req: Request, res: Response): Promise<void> {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+
+    const result = await voteService.listProposalVotes(page, limit);
+
+    response.success(res, result.votes, { pagination: result.pagination });
+  },
+
   // GET /api/v1/public/logs/roles
   async listRoleLogs(req: Request, res: Response): Promise<void> {
     const page = Math.max(1, Number(req.query.page) || 1);

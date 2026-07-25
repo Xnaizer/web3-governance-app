@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { UserCheck, Briefcase, BarChart3, Info, Gavel, Users } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ConfirmButton } from "../../components/ui/ConfirmButton";
 import { SearchInput } from "../../components/ui/SearchInput";
@@ -134,6 +135,7 @@ export function GovernancePage() {
                 </CardHeader>
                 <CardContent>
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={users.isLoading}
                     isError={users.isError}
                     error={users.error}
@@ -262,6 +264,7 @@ export function GovernancePage() {
                 </CardHeader>
                 <CardContent>
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={votes.isLoading}
                     isError={votes.isError}
                     error={votes.error}
@@ -404,6 +407,7 @@ export function GovernancePage() {
                     className="max-w-xs"
                   />
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={users.isLoading}
                     isError={users.isError}
                     error={users.error}

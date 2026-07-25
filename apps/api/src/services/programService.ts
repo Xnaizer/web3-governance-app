@@ -342,6 +342,14 @@ export async function getProgramById(programId: number) {
             resolved: true,
             picWallet: true,
             txHash: true,
+            ballots: {
+              select: {
+                approve: true,
+                votedAt: true,
+                voter: { select: USER_MINI },
+              },
+              orderBy: { votedAt: "asc" },
+            },
           },
         },
       },
@@ -440,13 +448,6 @@ export async function getSubmissionPayload(userId: string, programId: number) {
   };
 }
 
-/**
- * Full proposal-vote history for the connected validator — every program
- * they've ever cast a BFT approval vote on, regardless of whether that
- * program is still PENDING or has since moved to APPROVED/REJECTED/etc.
- * (the on-chain `hasVotedProposal` check alone can't answer this once a
- * program leaves the PENDING list).
- */
 export async function getMyProposalVotes(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },

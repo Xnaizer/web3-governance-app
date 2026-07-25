@@ -230,6 +230,32 @@ export function ProgramDetailPage() {
           resolved={appeal.resolved}
         />
       </div>
+      {appeal.ballots && appeal.ballots.length > 0 && (
+        <div className="mt-4 border-t border-black/5 pt-3">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Validator yang Vote
+          </p>
+          <div className="flex flex-col divide-y divide-black/5">
+            {appeal.ballots.map((b, i) => (
+              <div
+                key={i}
+                className="flex flex-wrap items-center gap-3 py-2 first:pt-0 last:pb-0"
+              >
+                <UserCell user={b.voter} wallet={b.voter?.walletAddress} />
+                <Badge
+                  variant={b.approve ? "success" : "destructive"}
+                  className="rounded-sm"
+                >
+                  {b.approve ? "Setuju" : "Tolak"}
+                </Badge>
+                <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
+                  {formatDate(b.votedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Section>
   ) : null;
 

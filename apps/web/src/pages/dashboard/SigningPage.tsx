@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { TriangleAlert, ShieldCheck } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { SearchInput } from "../../components/ui/SearchInput";
 import { FilterTabs } from "../../components/ui/FilterTabs";
 import {
@@ -293,6 +294,7 @@ export function SigningPage() {
       </div>
 
       <QueryState
+        skeleton={<BrandLoader />}
         isLoading={isLoading}
         isError={isError}
         error={error}

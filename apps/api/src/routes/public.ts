@@ -46,6 +46,12 @@ router.get(
 );
 
 router.get(
+  "/proposal-votes",
+  readLimiter,
+  asyncHandler(publicController.listProposalVotes),
+);
+
+router.get(
   "/logs/roles",
   readLimiter,
   asyncHandler(publicController.listRoleLogs),

@@ -1,5 +1,6 @@
 import { api } from "../lib/api";
 import type { Pagination } from "../types/common";
+import type { ProgramStatus } from "../types/program";
 
 interface Envelope<T> {
   data: T;
@@ -54,6 +55,15 @@ export async function fetchRoleVote(voteId: number) {
   return res.data.data;
 }
 
+export interface VoteProgramMini {
+  programId: number;
+  title: string | null;
+  status: ProgramStatus;
+  totalBudget: string;
+  picWallet: string;
+  pic: VoteUserMini | null;
+}
+
 export interface UnfreezeVoteRow {
   id: string;
   programId: number;
@@ -64,6 +74,7 @@ export interface UnfreezeVoteRow {
   resolved: boolean;
   createdAt: string;
   _count?: { ballots: number };
+  program: VoteProgramMini | null;
 }
 
 export async function fetchUnfreezeVotes(
@@ -71,6 +82,41 @@ export async function fetchUnfreezeVotes(
 ) {
   const res = await api.get<Envelope<UnfreezeVoteRow[]>>(
     "/public/unfreeze-votes",
+    { params: { limit: 12, ...params } },
+  );
+  return { rows: res.data.data, pagination: res.data.meta.pagination };
+}
+
+export interface UnfreezeBallot {
+  approve: boolean;
+  votedAt: string;
+  voter: VoteUserMini | null;
+}
+
+export type UnfreezeVoteDetail = UnfreezeVoteRow & {
+  txHash?: string | null;
+  ballots?: UnfreezeBallot[];
+};
+
+export async function fetchUnfreezeVote(programId: number) {
+  const res = await api.get<Envelope<UnfreezeVoteDetail>>(
+    `/public/unfreeze-votes/${programId}`,
+  );
+  return res.data.data;
+}
+
+export interface ProposalVoteRow {
+  programId: number;
+  voteCount: number;
+  lastVotedAt: string;
+  program: VoteProgramMini | null;
+}
+
+export async function fetchProposalVotes(
+  params: { page?: number; limit?: number } = {},
+) {
+  const res = await api.get<Envelope<ProposalVoteRow[]>>(
+    "/public/proposal-votes",
     { params: { limit: 12, ...params } },
   );
   return { rows: res.data.data, pagination: res.data.meta.pagination };

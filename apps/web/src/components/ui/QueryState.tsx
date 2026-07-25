@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BrandLoader } from "./BrandLoader";
+import { SkeletonList } from "./Skeleton";
 import { EmptyState } from "./EmptyState";
 import { getErrorMessage } from "../../utils/error";
 
@@ -32,7 +32,7 @@ export function QueryState({
   emptyAction,
   children,
 }: Props) {
-  if (isLoading) return <>{skeleton ?? <BrandLoader />}</>;
+  if (isLoading) return <>{skeleton ?? <SkeletonList />}</>;
 
   if (isError) {
     return (

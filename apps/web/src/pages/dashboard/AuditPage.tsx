@@ -11,6 +11,7 @@ import { getErrorMessage } from "../../utils/error";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { FilterTabs } from "../../components/ui/FilterTabs";
 import { SearchInput } from "../../components/ui/SearchInput";
 import { DataTable } from "../../components/ui/DataTable";
@@ -39,6 +40,7 @@ function MyFreezes() {
       </CardHeader>
       <CardContent>
         <QueryState
+          skeleton={<BrandLoader />}
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
@@ -335,6 +337,7 @@ export function AuditPage() {
             </div>
 
             <QueryState
+              skeleton={<BrandLoader />}
               isLoading={isLoading}
               isError={isError}
               error={error}

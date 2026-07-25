@@ -14,7 +14,8 @@ import { useMe } from "../../hooks/useAuth";
 const LINKS = [
   { label: "Program", to: "/programs" },
   { label: "Pengguna", to: "/users" },
-  { label: "Voting", to: "/governance/votes" },
+  { label: "Vote Peran", to: "/governance/votes" },
+  { label: "Vote Program", to: "/governance/program-votes" },
   { label: "Log Peran", to: "/governance/roles" },
   { label: "Penukaran", to: "/gateway/redemptions" },
   { label: "Tentang", to: "/about" },

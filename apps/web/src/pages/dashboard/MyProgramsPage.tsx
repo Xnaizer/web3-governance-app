@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { ConfirmButton } from "../../components/ui/ConfirmButton";
 import { DataTable } from "../../components/ui/DataTable";
 import { Button } from "@/components/ui/button";
@@ -185,6 +186,7 @@ export function MyProgramsPage() {
       )}
 
       <QueryState
+        skeleton={<BrandLoader />}
         isLoading={isLoading}
         isError={isError}
         error={error}
