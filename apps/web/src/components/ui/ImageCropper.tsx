@@ -11,7 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 interface ImageCropperProps {
   file: File | null;
-  aspect: number; // width / height, e.g. 1 for avatar, 3 for banner
+  aspect: number; 
   title?: string;
   outputWidth?: number;
   isSaving?: boolean;
@@ -21,12 +21,6 @@ interface ImageCropperProps {
 
 const BOX_MAX_W = 420;
 
-/**
- * Lightweight crop/resize tool (no external deps): shows the source photo
- * inside a fixed-aspect box, lets the user drag to reposition and use a
- * slider to zoom, then rasterizes the visible crop to a canvas at a fixed
- * output size so avatars/banners always come out consistently sized.
- */
 export function ImageCropper({
   file,
   aspect,
@@ -51,9 +45,6 @@ export function ImageCropper({
 
   const boxH = boxW / aspect;
 
-  // The crop box is measured off a full-width responsive wrapper (capped at
-  // BOX_MAX_W) so it never overflows the dialog on narrow screens — all the
-  // offset/zoom/canvas math below stays in real pixels against this value.
   useLayoutEffect(() => {
     if (!file) return;
     const el = wrapperRef.current;
@@ -77,7 +68,7 @@ export function ImageCropper({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  // base scale so the image always fully covers the crop box at zoom=1
+ 
   const baseScale = useMemo(() => {
     if (!naturalSize.w || !naturalSize.h) return 1;
     return Math.max(boxW / naturalSize.w, boxH / naturalSize.h);
@@ -127,7 +118,7 @@ export function ImageCropper({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Map the visible crop-box region (in displayed px) back to source px.
+    
       const outScale = outputWidth / boxW;
       const srcScale = scale;
       ctx.save();
@@ -153,7 +144,7 @@ export function ImageCropper({
 
   return (
     <Dialog open={!!file} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md gap-5 rounded-2xl p-5 sm:p-6">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-xl gap-4 rounded-2xl p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="font-display tracking-tight">
             {title}
