@@ -35,11 +35,32 @@ controllers/    # handler tiap route
 services/       # logika bisnis (auth, program, webhook, reputation, signature, ipfs, ...)
 validators/     # skema Zod + helper sanitasi
 queues/         # definisi BullMQ (webhook-ingestion, reconciliation)
-workers/        # worker BullMQ + scheduler rekonsiliasi
+workers/        # worker BullMQ + scheduler rekonsiliasi + warm-cache validator count
+scripts/        # skrip one-off (mis. backfillProposalVotes.ts)
 templates/      # email EJS (verify, reset password)
-lib/            # prisma, redis, logger
+lib/            # prisma (+ prismaDirect), redis, cache (in-memory), logger
 utils/          # AppError, asyncHandler, response envelope
 ```
+
+## Strategi Cache
+
+- **In-memory (app-level)** — `lib/cache.ts` (via `lib/memoryCache.ts`, `Map` in-process dengan TTL)
+  dipakai untuk semua `cacheAside()`: list/detail program, statistik publik, daftar penarikan,
+  jumlah validator on-chain, dll. API berjalan sebagai **satu proses long-running** (bukan
+  serverless), jadi data yang memang bisa dihitung ulang tak perlu bolak-balik ke Redis — ini
+  menghapus 1-2 network round-trip dari hampir semua endpoint baca.
+  ⚠️ **Konsekuensi:** cache ini tidak dibagi antar-proses. Skrip di `scripts/` yang memanggil
+  `invalidate()`/`invalidatePattern()` (mis. `backfillProposalVotes.ts`) hanya menghapus cache di
+  proses skrip itu sendiri — **restart server API** (atau tunggu TTL habis) setelah menjalankan
+  skrip one-off supaya server yang sedang berjalan ikut melihat data terbaru.
+- **Redis (Upstash)** — khusus data yang wajib shared & tahan-restart: **rate limiter**
+  (`middleware/rateLimiter.ts`) dan **blocklist token JWT** (`middleware/auth.ts`, wajib segera
+  berlaku lintas restart demi keamanan revocation).
+- **`prismaDirect`** (`lib/prisma.ts`, sumber di `packages/database`) — klien Prisma terpisah yang
+  memakai `DIRECT_URL` (bukan pooler transaction-mode). Dipakai khusus untuk
+  `prisma.$transaction(...)` multi-statement (mis. `createProgram`) karena PgBouncer
+  transaction-mode tidak cocok dengan asumsi "satu koneksi dipegang sepanjang BEGIN..COMMIT" yang
+  dibutuhkan interactive transaction Prisma.
 
 ## Alur Penting
 
@@ -67,8 +88,14 @@ kuota Redis saat dev).
 ## Perintah
 
 ```bash
-pnpm --filter @repo/api dev       # tsx watch  → http://localhost:4000
+pnpm --filter @repo/api dev                    # tsx watch  → http://localhost:4000
+pnpm --filter @repo/api backfill:proposal-votes  # skrip one-off, lihat catatan Strategi Cache di atas
 ```
 
 Endpoint kesehatan: `GET /health` (cek DB + Redis). BullBoard: `/admin/queues` (basic-auth).
 Deploy target: **Railway**.
+
+> **Cookie sesi:** `POST /auth/login` men-set dua cookie — `token` (JWT, `httpOnly`) dan
+> `has_session` (flag `"1"`, **bukan** `httpOnly`, tanpa nilai sensitif). `has_session` ada
+> semata agar frontend tahu kemungkinan ada sesi tanpa perlu memanggil `GET /auth/me` untuk
+> visitor yang jelas belum pernah login — keduanya dihapus bersamaan saat `POST /auth/logout`.
