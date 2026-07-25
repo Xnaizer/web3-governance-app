@@ -695,7 +695,10 @@ contract Web3Governance is EIP712, AccessControl {
      */
     function forceFreezeProgram(uint256 programId) external onlyRole(AUDITOR_ROLE) {
         Proposal storage prop = proposals[programId];
-        require(prop.status == ProposalStatus.DRAWABLE, "Govern: Program is not in active ");
+        require(
+            prop.status == ProposalStatus.DRAWABLE || prop.status == ProposalStatus.MILESTONE_ACHIEVED,
+            "Govern: Program is not in active or milestone-achieved state"
+        );
 
         prop.status = ProposalStatus.FROZEN;
         emit ProgramForceFrozen(programId, msg.sender);
@@ -762,7 +765,7 @@ contract Web3Governance is EIP712, AccessControl {
 
         if (appeal.approveVotes >= bftThreshold) {
             appeal.resolved = true;
-            prop.status = ProposalStatus.DRAWABLE;          
+            prop.status = prop.currentAllocatedBalance > 0 ? ProposalStatus.DRAWABLE : ProposalStatus.MILESTONE_ACHIEVED;
             emit ProgramUnfrozenViaBFT(programId);
         } else if (appeal.rejectVotes >= bftThreshold) {
             appeal.resolved = true;
