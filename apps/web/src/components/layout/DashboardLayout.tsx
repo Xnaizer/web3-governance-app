@@ -19,6 +19,7 @@ import {
   Clipboard,
   CreditCard,
   Inbox,
+  Landmark,
   LogOut,
   User as UserIcon,
   ChevronDown,
@@ -158,6 +159,12 @@ const TRANSPARENCY: NavItem[] = [
     to: "/governance/votes",
     roles: ALL,
     icon: <Clipboard className="h-4.5 w-4.5" />,
+  },
+  {
+    label: "Voting Program",
+    to: "/governance/program-votes",
+    roles: ALL,
+    icon: <Landmark className="h-4.5 w-4.5" />,
   },
   {
     label: "Penukaran",

@@ -38,11 +38,6 @@ function formatCompactIDR(amount: number): string {
 
 const BRAND_BLUE = "#4899EA";
 
-/**
- * Line chart of withdrawal amounts over time — a point per transaction,
- * each labeled with its (compact) amount, with a bigger highlight + exact
- * figure on hover. Built with plain SVG (no charting dependency).
- */
 export function WithdrawalChart({
   withdrawals,
 }: {

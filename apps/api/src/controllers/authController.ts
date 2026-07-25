@@ -60,6 +60,13 @@ export default {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
+    res.cookie("has_session", "1", {
+      httpOnly: false,
+      secure: env.NODE_ENV === "production",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     response.success(res, result);
   },
 
@@ -82,6 +89,11 @@ export default {
 
     res.clearCookie("token", {
       httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    });
+    res.clearCookie("has_session", {
+      httpOnly: false,
       secure: env.NODE_ENV === "production",
       sameSite: env.NODE_ENV === "production" ? "none" : "lax",
     });
