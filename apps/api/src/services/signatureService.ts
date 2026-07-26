@@ -1,5 +1,5 @@
 import { recoverTypedDataAddress } from "viem";
-import { prisma, prismaDirect } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { AppError } from "../utils/AppError";
 import { EIP712_DOMAIN, EIP712_TYPES } from "@repo/shared";
 import { hasRole } from "./contractService";
@@ -112,7 +112,7 @@ export async function submitSignature(
   }
 
   try {
-    const saved = await prismaDirect.$transaction(async (tx) => {
+    const saved = await txDirect(async (tx) => {
       if (!milestone.evidenceHash) {
         await tx.milestone.update({
           where: { id: milestone.id },
@@ -194,7 +194,7 @@ export async function resetSignatures(userId: string, milestoneId: string) {
     );
   }
 
-  const deleted = await prismaDirect.$transaction(async (tx) => {
+  const deleted = await txDirect(async (tx) => {
     const del = await tx.milestoneSignature.deleteMany({
       where: { milestoneId },
     });

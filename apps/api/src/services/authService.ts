@@ -1,4 +1,4 @@
-import { prisma, prismaDirect } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { hashPassword, generateToken, hashToken } from "./hashService";
 import { sendTemplateEmail } from "../lib/mailer";
 import { AppError } from "../utils/AppError";
@@ -56,7 +56,7 @@ export async function registerUser(input: RegisterInput): Promise<void> {
   const tokenHash = hashToken(rawToken);
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     const user = await tx.user.create({
       data: {
         username: input.username,
@@ -108,7 +108,7 @@ export async function verifyEmail(token: string): Promise<void> {
     throw new AppError("Verification token has expired", 400);
   }
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     await tx.user.update({
       where: {
         id: record.userId,
@@ -217,7 +217,7 @@ export async function resendVerification(email: string): Promise<void> {
   const tokenHash = hashToken(rawToken);
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     await tx.verificationToken.deleteMany({
       where: { userId: user.id, type: "ACTIVATION" },
     });
@@ -307,7 +307,7 @@ export async function resetPassword(
 
   const passwordHash = await hashPassword(newPassword);
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     await tx.user.update({
       where: {
         id: record.userId,

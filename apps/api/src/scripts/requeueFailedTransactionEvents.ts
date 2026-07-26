@@ -1,20 +1,4 @@
 /**
- * Requeues OutboxEvent rows that are permanently stuck in `FAILED` status
- * (hit `MAX_ATTEMPTS = 3` in outboxService.ts, so the normal poller —
- * which only claims `status = 'PENDING'` — will never pick them up again)
- * specifically because they failed with the PgBouncer transaction-mode
- * pooler error ("Transaction already closed: Could not perform operation" /
- * "Transaction API error"). That root cause is fixed as of this commit —
- * webhookService.ts / signatureService.ts / authService.ts /
- * reputationService.ts now run their `$transaction(...)` blocks on
- * `prismaDirect` (DIRECT_URL) instead of the pooled `prisma` client. See
- * packages/database/src/index.ts for why.
- *
- * This only resets events whose `lastError` matches that known signature —
- * NOT every FAILED event — so a genuinely bad/malformed event (bad args,
- * a real application bug) doesn't get silently retried forever and doesn't
- * get masked by this script.
- *
  * Usage:
  *   pnpm --filter @repo/api requeue:failed-tx-events            # dry run (default)
  *   pnpm --filter @repo/api requeue:failed-tx-events -- --apply # actually requeue

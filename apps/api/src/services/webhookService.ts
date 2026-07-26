@@ -1,4 +1,4 @@
-import { prisma, prismaDirect } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { computeProgramHash } from "@repo/shared";
 import { invalidate, invalidatePattern } from "../lib/cache";
 import { mapRoleHashToSignerRole, mapRoleHashToRole } from "./roleMapper";
@@ -239,7 +239,7 @@ export async function handleMilestoneReleased(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -289,7 +289,7 @@ export async function handleMilestoneFinalized(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -345,7 +345,7 @@ export async function handleProgramCompleted(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -461,7 +461,7 @@ export async function handleProgramForceFrozen(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -603,7 +603,7 @@ export async function handleProgramUnfrozenViaBFT(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -664,7 +664,7 @@ export async function handleProgramFraudConfirmed(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -839,7 +839,7 @@ export async function handleRoleGrantedViaGovernance(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     const updatedUser = await tx.user.update({
       where: {
         id: user.id,
@@ -895,7 +895,7 @@ export async function handleRoleRevokedViaGovernance(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prismaDirect.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     const updatedUser = await tx.user.update({
       where: {
         id: user.id,
@@ -951,7 +951,7 @@ export async function handlePicRoleGrantedByAdmin(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.user.update({
       where: { id: user.id },
       data: {
@@ -989,7 +989,7 @@ export async function handlePicRoleRevokedByAdmin(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prismaDirect.$transaction(async (tx: any ) => {
+  await txDirect(async (tx: any ) => {
     await tx.user.update({
       where: { id: user.id },
       data: {

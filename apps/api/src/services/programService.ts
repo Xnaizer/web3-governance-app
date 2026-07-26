@@ -1,4 +1,4 @@
-import { prisma, prismaDirect } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { AppError } from "../utils/AppError";
 import { computeProgramHash } from "@repo/shared";
 import { getValidatorCount } from "./contractService";
@@ -116,7 +116,7 @@ export async function createProgram(userId: string, input: CreateProgramInput) {
   }
 
   console.time("createProgram:transaction");
-  const result = await prismaDirect.$transaction(async (tx: any) => {
+  const result = await txDirect(async (tx: any) => {
     const program = await tx.program.create({
       data: {
         programHash: "",
