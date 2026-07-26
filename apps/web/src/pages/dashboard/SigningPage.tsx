@@ -238,13 +238,13 @@ function SignRow({ programId }: { programId: number }) {
 const STATUS_TABS = [
   { key: "ALL", label: "Semua" },
   { key: "APPROVED", label: "Approved" },
-  { key: "DRAWABLE", label: "Drawable" },
+  { key: "MILESTONE_ACHIEVED", label: "Milestone Selesai" },
 ] as const;
 
 export function SigningPage() {
   const { data, isLoading, isError, error, refetch } = useProgramsByStatus([
     "APPROVED",
-    "DRAWABLE",
+    "MILESTONE_ACHIEVED",
   ]);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("ALL");
@@ -302,7 +302,7 @@ export function SigningPage() {
         onRetry={refetch}
         emptyIcon={<TriangleAlert />}
         emptyTitle="Tidak ada program aktif"
-        emptyDescription="Program APPROVED/DRAWABLE akan muncul di sini saat siap ditandatangani."
+        emptyDescription="Program APPROVED/MILESTONE SELESAI akan muncul di sini saat siap ditandatangani."
       >
         <div className="overflow-x-auto rounded-2xl border border-black/5 bg-white">
           <Table style={{ minWidth: 760 }}>
