@@ -13,6 +13,7 @@ import {
   ImageOff,
   Images,
   Users,
+  ShieldAlert,
 } from "lucide-react";
 import { ListShell } from "../components/layout/ListShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -266,6 +267,28 @@ export function ProgramDetailPage() {
 
       {p && (
         <>
+          {p.status === "FRAUD_CONFIRMED" && (
+            <Card className="rounded-2xl border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950">
+              <CardContent className="flex items-start gap-3 p-4 text-sm text-red-900 dark:text-red-100">
+                <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                <div>
+                  <p className="font-semibold">
+                    Program ini terbukti FRAUD (Fraud Confirmed)
+                  </p>
+                  <p className="mt-0.5 text-red-800/90 dark:text-red-200/90">
+                    Program dibekukan oleh auditor dan tidak berhasil melewati
+                    voting BFT validator untuk unfreeze — dugaan penyalahgunaan
+                    dana dinyatakan terbukti secara on-chain. Semua penarikan
+                    dana pada program ini dihentikan permanen.
+                    {freeze && (
+                      <> Lihat detail di bagian Freeze di bawah halaman ini.</>
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {p.isOrphan && (
             <Card className="rounded-2xl border-amber-300 bg-amber-50 dark:bg-amber-950">
               <CardContent className="p-4 text-sm">
