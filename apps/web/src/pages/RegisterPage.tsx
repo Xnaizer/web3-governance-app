@@ -38,7 +38,7 @@ export function RegisterPage() {
     <AuthLayout
       title="Buat Akun"
       subtitle="Mulai mengelola atau mengawal dana publik."
-      icon={<UserPlus className="h-7 w-7" strokeWidth={2.2} />}
+      icon={<UserPlus className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} />}
       greeting={{
         title: (
           <>
@@ -56,6 +56,14 @@ export function RegisterPage() {
             className="font-medium text-brand-blue hover:underline"
           >
             Masuk
+          </Link>
+          <span className="mx-2 text-muted-foreground/40">·</span>
+          Email verifikasi tidak sampai?{" "}
+          <Link
+            to="/resend-verification"
+            className="font-medium text-brand-blue hover:underline"
+          >
+            Kirim ulang
           </Link>
         </>
       }

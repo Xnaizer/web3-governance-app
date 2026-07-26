@@ -369,7 +369,7 @@ export function AboutPage() {
         <section className="px-6 py-20 sm:py-24">
           <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
             <Reveal>
-              <div className="flex h-full flex-col justify-between rounded-3xl border border-black/5 bg-white p-8 ">
+              <div className="flex h-full flex-col justify-between rounded-3xl border border-black/5 bg-white p-5 sm:p-8">
                 <div>
                   <span className="text-xs font-medium uppercase tracking-[0.25em] text-brand-blue">
                     Pembuat
@@ -409,7 +409,7 @@ export function AboutPage() {
             </Reveal>
 
             <Reveal delay={0.08}>
-              <div className="flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-black/5 bg-foreground p-8 text-background shadow-soft">
+              <div className="flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-black/5 bg-foreground p-5 text-background shadow-soft sm:p-8">
                 <div>
                   <span className="inline-flex items-center gap-2 text-background/70">
                     <span aria-hidden className="h-5 w-5" style={ghMask} />
@@ -417,7 +417,7 @@ export function AboutPage() {
                       Sumber terbuka
                     </span>
                   </span>
-                  <h3 className="mt-5 font-display text-2xl font-semibold tracking-tight">
+                  <h3 className="mt-4 font-display text-xl font-semibold tracking-tight sm:mt-5 sm:text-2xl">
                     Dilisensikan MIT.
                   </h3>
                   <p className="mt-3 text-pretty text-sm leading-relaxed text-background/70">
@@ -460,7 +460,7 @@ export function AboutPage() {
           </Reveal>
         </section>
 
-        <section className="px-6 pb-24 pt-4 sm:pb-28">
+        <section className="px-4 pb-20 pt-4 sm:px-6 sm:pb-28">
           <div className="mx-auto max-w-3xl">
             <Reveal className="text-center">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.25em] text-brand-blue">

@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { computeProgramHash } from "@repo/shared";
 import { invalidate, invalidatePattern } from "../lib/cache";
 import { mapRoleHashToSignerRole, mapRoleHashToRole } from "./roleMapper";
@@ -8,6 +8,9 @@ import {
   resolveAuditorUserId,
 } from "./reputationService";
 import { sanitizeText } from "../utils/sanitize";
+import { getOnChainProposal, PROPOSAL_STATUS_BY_INDEX } from "./contractService";
+import { deriveTab } from "./reconciliationService";
+
 
 export interface DecodedEvent {
   eventName: string;
@@ -161,14 +164,26 @@ async function handleProposalSubmitted(
 
 export async function handleProposalVoted(
   args: Record<string, unknown>,
-  _txHash?: string,
+  txHash?: string,
 ): Promise<{ result: string; programId: number }> {
   const programId = Number(args.programId);
   const currentVotes = Number(args.currentVotes);
+  const validator = String(args.validator ?? "").toLowerCase();
 
   console.log(
     `[WEBHOOK] ProposalVoted program ${programId}, votes: ${currentVotes}`,
   );
+
+  if (validator) {
+    await prisma.proposalVoteLog.upsert({
+      where: {
+        programId_voterWallet: { programId, voterWallet: validator },
+      },
+      update: { txHash: txHash ?? undefined },
+      create: { programId, voterWallet: validator, txHash },
+    });
+    await invalidateProgramCache(programId);
+  }
 
   return { result: "PROPOSAL_VOTED_LOGGED", programId };
 }
@@ -224,7 +239,7 @@ export async function handleMilestoneReleased(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -274,7 +289,7 @@ export async function handleMilestoneFinalized(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -330,7 +345,7 @@ export async function handleProgramCompleted(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -403,6 +418,28 @@ export async function handleWithdrawalLogged(
     },
   });
 
+  const onChain = await getOnChainProposal(programId);
+  if (onChain) {
+    const onChainStatus = PROPOSAL_STATUS_BY_INDEX[onChain.status] ?? existing.status;
+    const onChainMilestone = Number(onChain.currentMilestone);
+    const onChainAllocated = onChain.totalAllocatedSoFar.toString();
+
+    const data: Record<string, unknown> = {};
+    if (existing.status !== onChainStatus) {
+      data.status = onChainStatus;
+      const targetTab = deriveTab(onChainStatus);
+      if (existing.displayTab !== targetTab) data.displayTab = targetTab;
+    }
+    if (existing.currentMilestone !== onChainMilestone)
+      data.currentMilestone = onChainMilestone;
+    if (existing.totalAllocatedSoFar !== onChainAllocated)
+      data.totalAllocatedSoFar = onChainAllocated;
+
+    if (Object.keys(data).length > 0) {
+      await prisma.program.update({ where: { programId }, data });
+    }
+  }
+
   await invalidateProgramCache(programId);
 
   return { result: "WITHDRAWAL_LOGGED", programId };
@@ -424,7 +461,7 @@ export async function handleProgramForceFrozen(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -566,7 +603,7 @@ export async function handleProgramUnfrozenViaBFT(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -627,7 +664,7 @@ export async function handleProgramFraudConfirmed(
     return { result: "SKIPPED_NOT_FOUND", programId };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.program.update({
       where: { programId },
       data: {
@@ -693,12 +730,13 @@ export async function handleProgramFraudConfirmed(
 
 export async function handleRoleVoteCreated(
   args: Record<string, unknown>,
-  _txHash?: string,
+  txHash?: string,
 ): Promise<{ result: string; voteId: number }> {
   const voteId = Number(args.voteId);
   const candidate = String(args.candidate).toLowerCase();
   const roleHash = String(args.roleToTarget);
   const isDevote = Boolean(args.isDevote);
+  const grantedBy = String(args.grantedBy).toLowerCase();
 
   const roleToTarget = mapRoleHashToSignerRole(roleHash);
 
@@ -716,6 +754,9 @@ export async function handleRoleVoteCreated(
       voteCount: 0,
       isDevote,
       executed: false,
+      grantedBy,
+      submittedAt: new Date(),
+      txHash: txHash ?? null,
     },
     update: {},
   });
@@ -778,6 +819,7 @@ export async function handleRoleGrantedViaGovernance(
 ): Promise<{ result: string }> {
   const roleHash = String(args.role);
   const account = String(args.account).toLowerCase();
+  const voteId = Number(args.voteId);
 
   const role = mapRoleHashToRole(roleHash);
 
@@ -797,8 +839,16 @@ export async function handleRoleGrantedViaGovernance(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prisma.$transaction(async (tx: any) => {
-    await tx.user.update({ where: { id: user.id }, data: { role } });
+  await txDirect(async (tx: any) => {
+    const updatedUser = await tx.user.update({
+      where: {
+        id: user.id,
+        updatedAt: user.updatedAt,
+      },
+      data: { role },
+      select: { id: true, role: true, updatedAt: true },
+    });
+
     await tx.roleChangeLog.create({
       data: {
         changeType: "ROLE_GRANTED",
@@ -808,7 +858,23 @@ export async function handleRoleGrantedViaGovernance(
         txHash: txHash ?? null,
       },
     });
+
+    const roleVote = await tx.roleVote.findUnique({ where: { voteId } });
+    if (roleVote) {
+      await tx.roleVote.update({
+        where: { voteId },
+        data: { executed: true },
+      });
+    } else {
+      console.warn(
+        `[WEBHOOK] RoleGranted: roleVote ${voteId} not found, skip executed flag`,
+      );
+    }
+
+    return updatedUser;
   });
+
+  await invalidatePattern("votes:role:*");
 
   return { result: `ROLE_GRANTED_${role}` };
 }
@@ -818,6 +884,7 @@ export async function handleRoleRevokedViaGovernance(
   txHash?: string,
 ): Promise<{ result: string }> {
   const account = String(args.account).toLowerCase();
+  const voteId = Number(args.voteId);
 
   const user = await prisma.user.findUnique({
     where: { walletAddress: account },
@@ -828,8 +895,16 @@ export async function handleRoleRevokedViaGovernance(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prisma.$transaction(async (tx: any) => {
-    await tx.user.update({ where: { id: user.id }, data: { role: "USER" } });
+  await txDirect(async (tx: any) => {
+    const updatedUser = await tx.user.update({
+      where: {
+        id: user.id,
+        updatedAt: user.updatedAt,
+      },
+      data: { role: "USER" },
+      select: { id: true, role: true, updatedAt: true },
+    });
+
     await tx.roleChangeLog.create({
       data: {
         changeType: "ROLE_REVOKED",
@@ -839,7 +914,23 @@ export async function handleRoleRevokedViaGovernance(
         txHash: txHash ?? null,
       },
     });
+
+    const roleVote = await tx.roleVote.findUnique({ where: { voteId } });
+    if (roleVote) {
+      await tx.roleVote.update({
+        where: { voteId },
+        data: { executed: true },
+      });
+    } else {
+      console.warn(
+        `[WEBHOOK] RoleRevoked: roleVote ${voteId} not found, skip executed flag`,
+      );
+    }
+
+    return updatedUser;
   });
+
+  await invalidatePattern("votes:role:*");
 
   return { result: "ROLE_REVOKED" };
 }
@@ -860,7 +951,7 @@ export async function handlePicRoleGrantedByAdmin(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.user.update({
       where: { id: user.id },
       data: {
@@ -898,7 +989,7 @@ export async function handlePicRoleRevokedByAdmin(
     return { result: "SKIPPED_USER_NOT_FOUND" };
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any ) => {
     await tx.user.update({
       where: { id: user.id },
       data: {

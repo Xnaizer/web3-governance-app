@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { TriangleAlert, ShieldCheck } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { SearchInput } from "../../components/ui/SearchInput";
 import { FilterTabs } from "../../components/ui/FilterTabs";
 import {
@@ -135,9 +136,16 @@ function SignRow({ programId }: { programId: number }) {
       </TableCell>
       <TableCell className="px-4 py-3">
         {milestone ? (
-          <span className="font-mono text-sm">
-            #{milestone.milestoneIndex + 1}
-          </span>
+          <div className="flex max-w-64 flex-col gap-1">
+            <span className="font-mono text-sm">
+              #{milestone.milestoneIndex + 1}
+            </span>
+            {milestone.description && (
+              <span className="truncate text-xs text-muted-foreground">
+                {milestone.description}
+              </span>
+            )}
+          </div>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -230,13 +238,13 @@ function SignRow({ programId }: { programId: number }) {
 const STATUS_TABS = [
   { key: "ALL", label: "Semua" },
   { key: "APPROVED", label: "Approved" },
-  { key: "DRAWABLE", label: "Drawable" },
+  { key: "MILESTONE_ACHIEVED", label: "Milestone Selesai" },
 ] as const;
 
 export function SigningPage() {
   const { data, isLoading, isError, error, refetch } = useProgramsByStatus([
     "APPROVED",
-    "DRAWABLE",
+    "MILESTONE_ACHIEVED",
   ]);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("ALL");
@@ -286,6 +294,7 @@ export function SigningPage() {
       </div>
 
       <QueryState
+        skeleton={<BrandLoader />}
         isLoading={isLoading}
         isError={isError}
         error={error}
@@ -293,7 +302,7 @@ export function SigningPage() {
         onRetry={refetch}
         emptyIcon={<TriangleAlert />}
         emptyTitle="Tidak ada program aktif"
-        emptyDescription="Program APPROVED/DRAWABLE akan muncul di sini saat siap ditandatangani."
+        emptyDescription="Program APPROVED/MILESTONE SELESAI akan muncul di sini saat siap ditandatangani."
       >
         <div className="overflow-x-auto rounded-2xl border border-black/5 bg-white">
           <Table style={{ minWidth: 760 }}>

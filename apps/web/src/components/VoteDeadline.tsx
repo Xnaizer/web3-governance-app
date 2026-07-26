@@ -1,6 +1,7 @@
 import { CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { voteDeadlineInfo, VOTE_DURATION_DAYS } from "../utils/format";
+import { VOTE_DURATION_DAYS } from "@repo/shared";
+import { voteDeadlineInfo } from "../utils/format";
 
 export function VoteDeadline({
   start,

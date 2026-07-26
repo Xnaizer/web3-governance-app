@@ -16,5 +16,6 @@ export interface Milestone {
   milestoneBudget: string;
   evidenceURL: string | null;
   evidenceHash: string | null;
+  createdAt: string;
   signatures: MilestoneSignature[];
 }

@@ -165,7 +165,7 @@ export function StatsCards() {
                   style={whiteLogoMask(`/logos/${c.logo}.svg`)}
                 />
                 <div>
-                  <p className="font-display text-4xl font-semibold tracking-tight">
+                  <p className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
                     <AnimatedCounter value={c.value} suffix={c.suffix} />
                   </p>
                   <p className="mt-1.5 text-sm font-medium leading-snug text-white/80">

@@ -1,42 +1,29 @@
-import { redis } from "./redis";
+import { memGet, memSet, memDel, memDelPattern } from "./memoryCache";
 
 export async function cacheAside<T>(
   key: string,
   ttlSeconds: number,
   fetcher: () => Promise<T>,
 ): Promise<T> {
-  const cached = await redis.get(key);
+  console.time(`cache:${key}`);
 
+  const cached = memGet(key);
   if (cached !== null) {
+    console.timeEnd(`cache:${key}`);
     return JSON.parse(cached) as T;
   }
 
   const fresh = await fetcher();
+  memSet(key, JSON.stringify(fresh), ttlSeconds);
 
-  await redis.set(key, JSON.stringify(fresh), "EX", ttlSeconds);
-
+  console.timeEnd(`cache:${key}`);
   return fresh;
 }
 
 export async function invalidate(key: string): Promise<void> {
-  await redis.del(key);
+  memDel(key);
 }
 
 export async function invalidatePattern(pattern: string): Promise<void> {
-  let cursor = "0";
-
-  do {
-    const [nextCursor, keys] = await redis.scan(
-      cursor,
-      "MATCH",
-      pattern,
-      "COUNT",
-      100,
-    );
-    cursor = nextCursor;
-
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
-  } while (cursor !== "0");
+  memDelPattern(pattern);
 }

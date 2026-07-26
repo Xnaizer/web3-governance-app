@@ -92,11 +92,19 @@ enum RoleChangeType {
   ROLE_REVOKED
 }
 
-// enum Redemption Status 
+// enum Redemption Status
 enum RedemptionStatus {
   PENDING
   SETTLED
   CANCELLED
+}
+
+// enum Outbox Status
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
 }
 
 // Redemption (two-phase escrow) Model Data
@@ -155,6 +163,7 @@ model User {
   redemptions        Redemption[]
 
   @@index([role])
+  @@index([updatedAt])
 }
 
 // Reputation Log Model Data
@@ -218,7 +227,7 @@ model Program {
   pic                  User?              @relation(fields: [picId], references: [id])
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
-  programURLs          String[]
+  images               ProgramImage[]
   milestones           Milestone[]
   withdrawals          WithdrawalRecord[]
   unfreezeVote         UnfreezeVote?
@@ -230,6 +239,18 @@ model Program {
   @@index([programHash])
   @@index([picId])
   @@index([isOnChain])
+}
+
+// Program Image Model Data
+model ProgramImage {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String
+  programId Int
+  program   Program  @relation(fields: [programId], references: [programId])
+  createdAt DateTime @default(now())
+
+  @@index([programId])
 }
 
 // Milestone Model Data
@@ -289,7 +310,15 @@ model RoleVote {
   voteCount    Int              @default(0)
   isDevote     Boolean          @default(false)
   executed     Boolean          @default(false)
+  grantedBy    String
+  submittedAt  DateTime
+  txHash       String?
   ballots      RoleVoteBallot[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([candidate, isDevote])
+  @@index([executed, submittedAt])
 }
 
 // Role Vote Ballot Model Data
@@ -359,4 +388,41 @@ model RoleChangeLog {
 
   @@index([targetWallet])
   @@index([actorWallet])
+}
+
+model ProposalVoteLog {
+  id          String   @id @default(cuid())
+  programId   Int
+  voterWallet String
+  txHash      String?
+  createdAt   DateTime @default(now())
+
+  @@unique([programId, voterWallet])
+  @@index([programId])
+  @@index([voterWallet])
+}
+
+model JobRun {
+  name      String   @id
+  lastRunAt DateTime
+  updatedAt DateTime @updatedAt
+}
+
+model OutboxEvent {
+  id            String       @id @default(cuid())
+  txHash        String
+  logIndex      Int
+  eventName     String
+  args          Json
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextAttemptAt DateTime     @default(now())
+  claimedAt     DateTime?
+  lastError     String?
+  createdAt     DateTime     @default(now())
+  processedAt   DateTime?
+
+  @@unique([txHash, logIndex])
+  @@index([status, nextAttemptAt])
+  @@index([status, claimedAt])
 }

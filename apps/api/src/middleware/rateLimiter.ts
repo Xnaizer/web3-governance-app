@@ -4,7 +4,13 @@ import { redis } from "../lib/redis";
 
 function makeStore(prefix: string) {
   return new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(args[0] as string, ...args.slice(1)) as Promise<any>,
+    sendCommand: (...args: string[]) => {
+      const label = `ratelimit:${prefix}:${args[0]}`;
+      console.time(label);
+      return (redis.call(args[0] as string, ...args.slice(1)) as Promise<any>).finally(
+        () => console.timeEnd(label),
+      );
+    },
     prefix: `ratelimit:${prefix}`,
   });
 }
@@ -36,6 +42,7 @@ export const readLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  store: makeStore("read"),
   message: limitMessage("Too many requests, try again later"),
 });
 

@@ -29,7 +29,7 @@ contract TrustedGatewayBurner {
 
     struct RedemptionRequest {
         address pic;              // who requested the redemption
-        uint256 amount;          // escrowed amount (Wei, 18 decimals)
+        uint256 amount;          // escrowed amount (0 decimals)
         uint256 createdAt;       // timestamp of the request (for reclaim timeout)
         RedemptionStatus status; // PENDING → SETTLED | CANCELLED
     }
@@ -70,7 +70,7 @@ contract TrustedGatewayBurner {
      * @notice Phase 1 — PIC deposits e-IDR into gateway custody (escrow, not yet burned).
      * @dev PIC must call approve(gatewayAddress, amount) on the token first. The pulled
      *      tokens sit in this contract until the operator settles or someone cancels.
-     * @param amount Amount to redeem, in Wei (18 decimals).
+     * @param amount Amount to redeem, in (0 decimals).
      * @return id The new redemption request id.
      */
     function requestRedemption(uint256 amount) external returns (uint256 id) {

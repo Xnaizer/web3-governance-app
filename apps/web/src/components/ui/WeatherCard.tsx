@@ -93,7 +93,7 @@ export function WeatherCard() {
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-1">
-                <span className="font-display text-3xl font-semibold tracking-tight">
+                <span className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                   {Math.round(data.temperature_2m)}
                 </span>
                 <span className="text-lg text-muted-foreground">°C</span>

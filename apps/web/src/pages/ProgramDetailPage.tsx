@@ -11,6 +11,9 @@ import {
   Snowflake,
   Scale,
   ImageOff,
+  Images,
+  Users,
+  ShieldAlert,
 } from "lucide-react";
 import { ListShell } from "../components/layout/ListShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,12 +22,15 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useProgram } from "../hooks/usePrograms";
 import { StatusChip, IntegrityChip } from "../components/StatusChip";
+import { UserCell } from "../components/UserCell";
 import { WithdrawalDetailModal } from "../components/ui/WithdrawalDetailModal";
 import { StatStrip } from "../components/ui/StatStrip";
 import { BrandLoader } from "../components/ui/BrandLoader";
 import { DarkHero } from "../components/ui/DarkHero";
 import { SectionCard } from "../components/ui/SectionCard";
 import { AllocationMeter } from "../components/charts/AllocationMeter";
+import { WithdrawalChart } from "../components/charts/WithdrawalChart";
+import { ZoomableImage } from "../components/ui/Lightbox";
 import { VoteDeadline } from "../components/VoteDeadline";
 import {
   useValidatorThreshold,
@@ -125,7 +131,7 @@ export function ProgramDetailPage() {
       accent="#f59e0b"
       className={unresolved ? "border-amber-300 bg-amber-50/40" : ""}
     >
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <Field
           label="Auditor"
           value={formatShortenAddress(freeze.auditorWallet)}
@@ -202,7 +208,7 @@ export function ProgramDetailPage() {
           </div>
         );
       })()}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <Field
           label="Status"
           value={
@@ -225,6 +231,32 @@ export function ProgramDetailPage() {
           resolved={appeal.resolved}
         />
       </div>
+      {appeal.ballots && appeal.ballots.length > 0 && (
+        <div className="mt-4 border-t border-black/5 pt-3">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Validator yang Vote
+          </p>
+          <div className="flex flex-col divide-y divide-black/5">
+            {appeal.ballots.map((b, i) => (
+              <div
+                key={i}
+                className="flex flex-wrap items-center gap-3 py-2 first:pt-0 last:pb-0"
+              >
+                <UserCell user={b.voter} wallet={b.voter?.walletAddress} />
+                <Badge
+                  variant={b.approve ? "success" : "destructive"}
+                  className="rounded-sm"
+                >
+                  {b.approve ? "Setuju" : "Tolak"}
+                </Badge>
+                <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
+                  {formatDate(b.votedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </Section>
   ) : null;
 
@@ -235,6 +267,28 @@ export function ProgramDetailPage() {
 
       {p && (
         <>
+          {p.status === "FRAUD_CONFIRMED" && (
+            <Card className="rounded-2xl border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950">
+              <CardContent className="flex items-start gap-3 p-4 text-sm text-red-900 dark:text-red-100">
+                <ShieldAlert className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                <div>
+                  <p className="font-semibold">
+                    Program ini terbukti FRAUD (Fraud Confirmed)
+                  </p>
+                  <p className="mt-0.5 text-red-800/90 dark:text-red-200/90">
+                    Program dibekukan oleh auditor dan tidak berhasil melewati
+                    voting BFT validator untuk unfreeze — dugaan penyalahgunaan
+                    dana dinyatakan terbukti secara on-chain. Semua penarikan
+                    dana pada program ini dihentikan permanen.
+                    {freeze && (
+                      <> Lihat detail di bagian Freeze di bawah halaman ini.</>
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {p.isOrphan && (
             <Card className="rounded-2xl border-amber-300 bg-amber-50 dark:bg-amber-950">
               <CardContent className="p-4 text-sm">
@@ -327,6 +381,29 @@ export function ProgramDetailPage() {
             />
           </Section>
 
+          {p.isOnChain && p.proposalVoters.length > 0 && (
+            <Section
+              title="Validator yang Menyetujui"
+              eyebrow={`${p.proposalVoters.length} vote`}
+              icon={<Users className="h-4 w-4" />}
+              accent="#818CF8"
+            >
+              <div className="flex flex-col divide-y divide-black/5">
+                {p.proposalVoters.map((v) => (
+                  <div
+                    key={v.wallet}
+                    className="flex flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <UserCell user={v.user} wallet={v.wallet} />
+                    <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDate(v.votedAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {p.pic && (
             <Card className="rounded-2xl border-black/5 shadow-none">
               <CardContent className="flex flex-row items-center gap-3 p-4">
@@ -362,18 +439,18 @@ export function ProgramDetailPage() {
             </Card>
           )}
 
-          {p.programURLs && p.programURLs.length > 0 && (
-            <Section title="Foto Program">
+          {p.images && p.images.length > 0 && (
+            <Section title="Foto Program" icon={<Images className="h-4 w-4" />}>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {p.programURLs.map((url, i) => (
-                  <a key={i} href={url} target="_blank" rel="noreferrer">
-                    <img
-                      src={url}
-                      alt={`Foto ${i + 1}`}
-                      className="h-32 w-full rounded-lg border object-cover transition-transform hover:scale-[1.02]"
-                      loading="lazy"
-                    />
-                  </a>
+                {p.images.map((img, i) => (
+                  <ZoomableImage
+                    key={img.id}
+                    src={img.url}
+                    alt={`Foto ${i + 1}`}
+                    className="h-32 w-full rounded-lg border object-cover transition-transform group-hover:scale-[1.02]"
+                    wrapperClassName="overflow-hidden rounded-lg"
+                    loading="lazy"
+                  />
                 ))}
               </div>
             </Section>
@@ -463,6 +540,11 @@ export function ProgramDetailPage() {
                           {formatIDR(m.milestoneBudget)}
                         </span>
                       </div>
+                      {m.description && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {m.description}
+                        </p>
+                      )}
                       {m.signatures.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {m.signatures.map((s) => (
@@ -514,7 +596,9 @@ export function ProgramDetailPage() {
                 Belum ada penarikan.
               </p>
             ) : (
-              <div className="flex flex-col divide-y divide-black/5">
+              <div className="flex flex-col gap-4">
+                <WithdrawalChart withdrawals={p.withdrawals} />
+                <div className="flex flex-col divide-y divide-black/5">
                 {p.withdrawals.map((w) => (
                   <div
                     key={w.id}
@@ -550,6 +634,7 @@ export function ProgramDetailPage() {
                     </Button>
                   </div>
                 ))}
+                </div>
               </div>
             )}
           </Section>

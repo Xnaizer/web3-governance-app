@@ -80,6 +80,7 @@ contract Web3Governance is EIP712, AccessControl {
         uint256 voteCount;
         bool isDevote;
         bool executed;
+        uint256 rVoteSubmittedAt;
     }
 
     /**
@@ -118,6 +119,12 @@ contract Web3Governance is EIP712, AccessControl {
 
     /// @notice All funding programs, keyed by programId (assigned by PIC from Web2).
     mapping(uint256 => Proposal) public proposals;
+
+    /// @notice True if candidate had proposal role vote active / not resolved yet
+    mapping(address => bool) public hasPendingRoleVote;
+
+    /// @notice Last VoteId that active for candidate
+    mapping(address => uint256) public latestRoleVoteIdOf;
 
     /// @dev Withdrawal history per program. private — accessed via getWithdrawalHistory().
     mapping(uint256 => WithdrawalRecord[]) private withdrawalHistories;
@@ -177,16 +184,16 @@ contract Web3Governance is EIP712, AccessControl {
     // ==========================================
 
     /// @notice Emitted when an admin proposes a new role grant or revoke vote.
-    event RoleVoteCreated(uint256 indexed voteId, address indexed candidate, bytes32 roleToTarget, bool isDevote);
+    event RoleVoteCreated(uint256 indexed voteId, address indexed candidate, bytes32 roleToTarget, bool isDevote, address grantedBy);
 
     /// @notice Emitted each time an admin casts a vote on a role proposal.
     event RoleVoteCast(uint256 indexed voteId, address indexed admin, uint256 currentVotes);
 
     /// @notice Emitted when a role is granted to an account through BFT governance.
-    event RoleGrantedViaGovernance(bytes32 indexed role, address indexed account);
+    event RoleGrantedViaGovernance(bytes32 indexed role, address indexed account, uint256 voteId);
 
     /// @notice Emitted when a role is revoked from an account through BFT governance.
-    event RoleRevokedViaGovernance(bytes32 indexed role, address indexed account);
+    event RoleRevokedViaGovernance(bytes32 indexed role, address indexed account, uint256 voteId);
 
     /// @notice Emitted when an admin directly grants PIC_ROLE (no voting). The granting admin
     ///         (msg.sender) is recorded as the accountable party.
@@ -250,10 +257,25 @@ contract Web3Governance is EIP712, AccessControl {
     constructor(address _rupiahTokenAddress, address rootAdmin) 
         EIP712("GovernanceAntiCorruption", "1") 
     {
-        _grantRole(DEFAULT_ADMIN_ROLE, rootAdmin);
         _grantRole(ADMIN_ROLE, rootAdmin);
         totalAdminsCount = 1;
         rupiahToken = IRupiahToken(_rupiahTokenAddress);
+    }
+
+    /**
+     * @notice Checks whether a candidate currently has an unresolved role vote.
+     * @dev A vote is considered inactive if it was already executed.
+     *      window has expired - in both cases a new proposal for the same candidate is allowed
+     */
+    function _hasActivePendingVote(address candidate) internal view returns (bool) {
+        if(!hasPendingRoleVote[candidate]) return false;
+
+        RoleVote storage v = roleVotes[latestRoleVoteIdOf[candidate]];
+
+        if(v.executed) return false;
+        if(block.timestamp > v.rVoteSubmittedAt + VOTING_PERIOD) return false;
+
+        return true;
     }
 
     // ==========================================
@@ -277,6 +299,7 @@ contract Web3Governance is EIP712, AccessControl {
             "Govern: Candidate already holds a role"
         );
         require(roleToGrant != PIC_ROLE, "Govern: Use grantPicRole for PIC, not voting");
+        require(!_hasActivePendingVote(candidate), "Govern: Candidate has an active vote in progress");
 
         uint256 voteId = roleVoteNonce++;
 
@@ -285,10 +308,14 @@ contract Web3Governance is EIP712, AccessControl {
             roleToTarget: roleToGrant,
             voteCount: 0,
             isDevote: false,
-            executed: false
+            executed: false,
+            rVoteSubmittedAt: block.timestamp
         });
 
-        emit RoleVoteCreated(voteId, candidate, roleToGrant, false);
+        hasPendingRoleVote[candidate] = true;
+        latestRoleVoteIdOf[candidate] = voteId;
+
+        emit RoleVoteCreated(voteId, candidate, roleToGrant, false, msg.sender);
     }
 
     /**
@@ -302,6 +329,7 @@ contract Web3Governance is EIP712, AccessControl {
     function proposeRoleDevote(address targetUser, bytes32 roleToRevoke) external onlyRole(ADMIN_ROLE) {
         require(hasRole(roleToRevoke, targetUser), "Govern: Target does not hold this role");
         require(roleToRevoke != PIC_ROLE, "Govern: Use revokePicRole for PIC, not voting");
+        require(!_hasActivePendingVote(targetUser), "Govern: Candidate has an active vote in progress");
 
         uint256 voteId = roleVoteNonce++;
 
@@ -310,10 +338,14 @@ contract Web3Governance is EIP712, AccessControl {
             roleToTarget: roleToRevoke,
             voteCount: 0,
             isDevote: true,
-            executed: false
+            executed: false,
+            rVoteSubmittedAt: block.timestamp
         });
 
-        emit RoleVoteCreated(voteId, targetUser, roleToRevoke, true);
+        hasPendingRoleVote[targetUser] = true;
+        latestRoleVoteIdOf[targetUser] = voteId;
+
+        emit RoleVoteCreated(voteId, targetUser, roleToRevoke, true, msg.sender);
     }
 
     /**
@@ -328,6 +360,7 @@ contract Web3Governance is EIP712, AccessControl {
         RoleVote storage rVote = roleVotes[voteId];
 
         require(!rVote.executed, "Govern: Vote already executed");
+        require(block.timestamp <= rVote.rVoteSubmittedAt + VOTING_PERIOD, "Govern: Voting period has expired");
         require(!hasVotedRole[voteId][msg.sender], "Govern: You have already voted");
 
         hasVotedRole[voteId][msg.sender] = true;
@@ -338,17 +371,21 @@ contract Web3Governance is EIP712, AccessControl {
 
         if (rVote.voteCount >= adminBftThreshold) {
             rVote.executed = true;
+            hasPendingRoleVote[rVote.candidate] = false;
 
             if (rVote.isDevote) {
+                bool wasHolder = hasRole(rVote.roleToTarget, rVote.candidate);
                 _revokeRole(rVote.roleToTarget, rVote.candidate);
 
-                if (rVote.roleToTarget == ADMIN_ROLE) {
-                    if (totalAdminsCount > 1) totalAdminsCount -= 1;
-                } else if (rVote.roleToTarget == VALIDATOR_ROLE) {
-                    if (totalValidatorsCount > 0) totalValidatorsCount -= 1;
+                if (wasHolder) {
+                    if (rVote.roleToTarget == ADMIN_ROLE) {
+                        totalAdminsCount -= 1;
+                    } else if (rVote.roleToTarget == VALIDATOR_ROLE) {
+                        totalValidatorsCount -= 1;
+                    }
                 }
-                emit RoleRevokedViaGovernance(rVote.roleToTarget, rVote.candidate);
-            } else {
+                emit RoleRevokedViaGovernance(rVote.roleToTarget, rVote.candidate, voteId);
+            }else {
                 require(
                     !hasRole(ADMIN_ROLE, rVote.candidate) &&
                     !hasRole(VALIDATOR_ROLE, rVote.candidate) &&
@@ -364,7 +401,7 @@ contract Web3Governance is EIP712, AccessControl {
                 } else if (rVote.roleToTarget == VALIDATOR_ROLE) {
                     totalValidatorsCount += 1;
                 }
-                emit RoleGrantedViaGovernance(rVote.roleToTarget, rVote.candidate);
+                emit RoleGrantedViaGovernance(rVote.roleToTarget, rVote.candidate, voteId);
             }
         }
     }
@@ -600,6 +637,7 @@ contract Web3Governance is EIP712, AccessControl {
 
         if (prop.currentAllocatedBalance == 0) {
             prop.status = ProposalStatus.MILESTONE_ACHIEVED;
+            emit MilestoneFinalized(programId, prop.currentMilestone - 1);
 
             if (prop.currentMilestone == prop.milestoneCount) {
                 prop.status = ProposalStatus.COMPLETED;
@@ -657,7 +695,10 @@ contract Web3Governance is EIP712, AccessControl {
      */
     function forceFreezeProgram(uint256 programId) external onlyRole(AUDITOR_ROLE) {
         Proposal storage prop = proposals[programId];
-        require(prop.status == ProposalStatus.DRAWABLE, "Govern: Program is not in active ");
+        require(
+            prop.status == ProposalStatus.DRAWABLE || prop.status == ProposalStatus.MILESTONE_ACHIEVED,
+            "Govern: Program is not in active or milestone-achieved state"
+        );
 
         prop.status = ProposalStatus.FROZEN;
         emit ProgramForceFrozen(programId, msg.sender);
@@ -724,7 +765,7 @@ contract Web3Governance is EIP712, AccessControl {
 
         if (appeal.approveVotes >= bftThreshold) {
             appeal.resolved = true;
-            prop.status = ProposalStatus.DRAWABLE;          
+            prop.status = prop.currentAllocatedBalance > 0 ? ProposalStatus.DRAWABLE : ProposalStatus.MILESTONE_ACHIEVED;
             emit ProgramUnfrozenViaBFT(programId);
         } else if (appeal.rejectVotes >= bftThreshold) {
             appeal.resolved = true;

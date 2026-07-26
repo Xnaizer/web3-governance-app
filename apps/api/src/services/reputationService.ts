@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import type { Prisma, ReputationReason } from "@repo/database";
 
 export const REPUTATION_DELTAS: Record<ReputationReason, number> = {
@@ -94,7 +94,7 @@ export async function applyReputation({
     return execute(tx);
   }
 
-  return prisma.$transaction((trasaction) => execute(trasaction));
+  return txDirect((trasaction) => execute(trasaction));
 }
 
 export async function resolvePicUserId(

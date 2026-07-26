@@ -36,7 +36,7 @@ export function QueryState({
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 py-10 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-8 text-center sm:py-10">
         <AlertTriangle className="h-6 w-6 text-destructive" />
         <p className="text-sm text-destructive">
           {getErrorMessage(error) || "Gagal memuat data."}

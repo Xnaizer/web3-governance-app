@@ -40,10 +40,10 @@ export function ClockCard() {
   const today = now.getDate();
 
   return (
-    <Card className="border-none bg-muted/30 shadow-none">
+    <Card className="border-1 border-gray-100 bg-white  shadow-none">
       <CardContent className="flex flex-col gap-3 p-4">
         <div>
-          <p className="font-mono text-3xl font-bold tracking-tight text-brand-blue">
+          <p className="font-mono text-2xl font-bold tracking-tight text-brand-blue sm:text-3xl">
             {time}
           </p>
           <p className="text-sm text-muted-foreground">{dateLong}</p>

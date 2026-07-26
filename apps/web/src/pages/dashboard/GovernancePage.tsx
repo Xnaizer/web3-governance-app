@@ -1,25 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Check,
-  ChevronsUpDown,
-  UserCheck,
-  Briefcase,
-  BarChart3,
-  Info,
-  Gavel,
-  Users,
-} from "lucide-react";
+import { UserCheck, Briefcase, BarChart3, Info, Gavel, Users } from "lucide-react";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { QueryState } from "../../components/ui/QueryState";
+import { BrandLoader } from "../../components/ui/BrandLoader";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ConfirmButton } from "../../components/ui/ConfirmButton";
 import { SearchInput } from "../../components/ui/SearchInput";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -29,353 +20,32 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { cn } from "@/utils/cn";
 import { AdminUserDetailModal } from "../../components/AdminUserDetailModal";
-import { useMyActivity } from "../../hooks/useMyActivity";
+import { UserCell } from "../../components/UserCell";
+import { RowAvatar } from "../../components/dashboard/governance/RowAvatar";
+import {
+  PicGrantRow,
+  PicActiveRow,
+} from "../../components/dashboard/governance/PicRows";
+import { RoleVoteCount } from "../../components/dashboard/governance/RoleVoteCount";
+import { CandidateCombobox } from "../../components/dashboard/governance/CandidateCombobox";
+import { MyRoleVotes } from "../../components/dashboard/governance/MyRoleVotes";
 import { listUsersAdmin, type AdminUser } from "../../services/usersApi";
 import { fetchRoleVotes } from "../../services/votesApi";
-import {
-  useGrantPic,
-  useProposeRole,
-  useVoteRoleProposal,
-} from "../../hooks/useAdmin";
-import { useAdminThreshold, useRoleVoteCount } from "../../hooks/useGovReads";
+import { useProposeRole, useVoteRoleProposal } from "../../hooks/useAdmin";
+import { useAdminThreshold } from "../../hooks/useGovReads";
 import { VOTABLE_ROLES, type GovRole } from "../../config/roles";
-import { formatShortenAddress, formatDate } from "../../utils/format";
+import { formatShortenAddress } from "../../utils/format";
+import { VoteDeadline } from "@/components/VoteDeadline";
 
-function initials(s: string): string {
-  return (
-    s
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
-}
-
-function RowAvatar({ u }: { u: AdminUser }) {
-  return (
-    <Avatar className="h-9 w-9 shrink-0">
-      {u.profilePictureURL && (
-        <AvatarImage src={u.profilePictureURL} alt={u.name ?? u.username} />
-      )}
-      <AvatarFallback className="text-[10px]">
-        {initials(u.name ?? u.username)}
-      </AvatarFallback>
-    </Avatar>
-  );
-}
-
-function PicGrantRow({
-  u,
-  onDetail,
-}: {
-  u: AdminUser;
-  onDetail: (id: string) => void;
-}) {
-  const { grant } = useGrantPic();
-  const wallet = u.walletAddress;
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-black/5 py-2.5 last:border-0">
-      <RowAvatar u={u} />
-      <div className="min-w-0 flex-1 text-sm">
-        <button
-          type="button"
-          onClick={() => onDetail(u.id)}
-          className="font-semibold text-brand-blue hover:underline"
-        >
-          {u.name ?? u.username}
-        </button>{" "}
-        {wallet ? (
-          <span className="font-mono text-xs text-muted-foreground">
-            {formatShortenAddress(wallet)}
-          </span>
-        ) : (
-          <Badge variant="secondary" className="rounded-sm">
-            tanpa wallet
-          </Badge>
-        )}
-        {u.isVerified ? (
-          <Badge variant="success" className="ml-2 rounded-sm">
-            verified
-          </Badge>
-        ) : (
-          <Badge variant="warning" className="ml-2 rounded-sm">
-            unverified
-          </Badge>
-        )}
-      </div>
-
-      <Button
-        size="sm"
-        variant={u.isVerified ? "ghost" : "secondary"}
-        onClick={() => onDetail(u.id)}
-      >
-        {u.isVerified ? "Lihat detail" : "Detail & Verifikasi"}
-      </Button>
-
-      {u.isVerified && wallet && (
-        <ConfirmButton
-          triggerLabel="Grant PIC"
-          triggerProps={{ size: "sm", color: "primary", variant: "flat" }}
-          title={`Beri PIC_ROLE ke ${u.name ?? u.username}?`}
-          confirmLabel="Ya, grant PIC"
-          toasts={{ loading: "Grant PIC…", success: "PIC diberikan." }}
-          action={() => grant(wallet)}
-          warnings={[
-            "Aksi tercatat on-chain dan tidak bisa dibatalkan (hanya bisa di-revoke terpisah).",
-            "Wallet ini akan diizinkan submit proposal pendanaan langsung ke kontrak.",
-            "Hanya untuk user tanpa peran lain (kontrak menolak double-grant).",
-          ]}
-        />
-      )}
-      {u.isVerified && !wallet && (
-        <Badge variant="warning" className="rounded-sm">
-          user belum bind wallet
-        </Badge>
-      )}
-    </div>
-  );
-}
-
-function PicActiveRow({
-  u,
-  onDetail,
-}: {
-  u: AdminUser;
-  onDetail: (id: string) => void;
-}) {
-  const { revoke } = useGrantPic();
-  const wallet = u.walletAddress!;
-  return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-black/5 py-2.5 last:border-0">
-      <RowAvatar u={u} />
-      <div className="min-w-0 flex-1 text-sm">
-        <button
-          type="button"
-          onClick={() => onDetail(u.id)}
-          className="font-semibold text-brand-blue hover:underline"
-        >
-          {u.name ?? u.username}
-        </button>{" "}
-        <span className="font-mono text-xs text-muted-foreground">
-          {formatShortenAddress(wallet)}
-        </span>
-        <Badge className="ml-2 rounded-sm">PIC</Badge>
-      </div>
-      <Button size="sm" variant="ghost" onClick={() => onDetail(u.id)}>
-        Lihat detail
-      </Button>
-      <ConfirmButton
-        triggerLabel="Revoke PIC"
-        triggerProps={{ size: "sm", color: "danger", variant: "light" }}
-        title={`Cabut PIC_ROLE dari ${u.name ?? u.username}?`}
-        confirmLabel="Ya, revoke PIC"
-        confirmColor="danger"
-        toasts={{ loading: "Revoke PIC…", success: "PIC dicabut." }}
-        action={() => revoke(wallet)}
-        warnings={[
-          "Aksi tercatat on-chain dan tidak bisa dibatalkan.",
-          "Wallet tidak lagi bisa submit proposal baru setelah dicabut.",
-        ]}
-      />
-    </div>
-  );
-}
-
-function RoleVoteCount({
-  voteId,
-  threshold,
-}: {
-  voteId: number;
-  threshold: number;
-}) {
-  const count = useRoleVoteCount(voteId);
-  return (
-    <Badge
-      variant={count >= threshold ? "success" : "secondary"}
-      className="rounded-sm"
-    >
-      {count}/{threshold} suara
-    </Badge>
-  );
-}
-
-function CandidateCombobox({
-  candidates,
-  value,
-  onChange,
-}: {
-  candidates: AdminUser[];
-  value: string;
-  onChange: (wallet: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selected = candidates.find((u) => u.walletAddress === value);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between font-normal"
-        >
-          {selected ? (
-            <span className="flex min-w-0 items-center gap-2">
-              <Avatar className="h-6 w-6 shrink-0">
-                {selected.profilePictureURL && (
-                  <AvatarImage
-                    src={selected.profilePictureURL}
-                    alt={selected.name ?? selected.username}
-                  />
-                )}
-                <AvatarFallback className="text-[9px]">
-                  {initials(selected.name ?? selected.username)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate">
-                {selected.name ?? selected.username}
-              </span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">Cari nama / wallet…</span>
-          )}
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
-        align="start"
-      >
-        <Command>
-          <CommandInput placeholder="Cari nama / wallet…" />
-          <CommandList>
-            <CommandEmpty>Tidak ada kandidat.</CommandEmpty>
-            <CommandGroup>
-              {candidates.map((u) => (
-                <CommandItem
-                  key={u.walletAddress!}
-                  value={`${u.name ?? u.username} ${u.walletAddress}`}
-                  onSelect={() => {
-                    onChange(u.walletAddress!);
-                    setOpen(false);
-                  }}
-                >
-                  <Avatar className="h-7 w-7 shrink-0">
-                    {u.profilePictureURL && (
-                      <AvatarImage
-                        src={u.profilePictureURL}
-                        alt={u.name ?? u.username}
-                      />
-                    )}
-                    <AvatarFallback className="text-[10px]">
-                      {initials(u.name ?? u.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm">
-                      {u.name ?? u.username} ·{" "}
-                      <span className="text-muted-foreground">{u.role}</span>
-                      {u.isVerified ? " ✓" : ""}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {formatShortenAddress(u.walletAddress!)}
-                    </span>
-                  </div>
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      value === u.walletAddress ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function MyRoleVotes() {
-  const { data, isLoading, isError, refetch } = useMyActivity();
-  const ballots = data?.roleVoteBallots ?? [];
-  return (
-    <Card className="rounded-2xl border-black/5 shadow-none">
-      <CardHeader className="flex-row items-center gap-2 space-y-0 font-display font-semibold tracking-tight">
-        <Gavel className="h-4 w-4 text-brand-blue" />
-        Role yang Saya Vote
-        <Badge variant="secondary" className="ml-auto rounded-sm">
-          {ballots.length}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <QueryState
-          isLoading={isLoading}
-          isError={isError}
-          onRetry={refetch}
-          isEmpty={ballots.length === 0}
-          emptyIcon={<Gavel />}
-          emptyTitle="Belum ada voting peran"
-          emptyDescription="Usulan perubahan peran yang Anda setujui akan tercatat di sini."
-        >
-          <div className="flex flex-col">
-            {ballots.map((b, i) => (
-              <div
-                key={i}
-                className="flex flex-wrap items-center gap-2 border-b border-black/5 py-2.5 text-sm last:border-0"
-              >
-                <Link
-                  to={`/governance/votes/${b.roleVote.voteId}`}
-                  className="font-mono text-xs text-brand-blue hover:underline"
-                >
-                  #{b.roleVote.voteId}
-                </Link>
-                <Badge
-                  variant={b.roleVote.isDevote ? "destructive" : "default"}
-                  className="rounded-sm"
-                >
-                  {b.roleVote.isDevote ? "Devote" : "Grant"}
-                </Badge>
-                <Badge variant="secondary" className="rounded-sm">
-                  {b.roleVote.roleToTarget}
-                </Badge>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {formatShortenAddress(b.roleVote.candidate)}
-                </span>
-                <Badge
-                  variant={b.roleVote.executed ? "success" : "secondary"}
-                  className="rounded-sm"
-                >
-                  {b.roleVote.executed ? "Selesai" : "Berjalan"}
-                </Badge>
-                <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
-                  {formatDate(b.votedAt)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </QueryState>
-      </CardContent>
-    </Card>
-  );
+const ROLE_LABEL: Record<string, string> = {
+  ADMIN: "Admin",
+  VALIDATOR: "Validator",
+  AUDITOR: "Auditor",
+  PIC: "PIC",
+};
+function roleLabel(role: string): string {
+  return ROLE_LABEL[role] ?? role;
 }
 
 export function GovernancePage() {
@@ -398,7 +68,8 @@ export function GovernancePage() {
   const roleVote = useVoteRoleProposal();
 
   const validAddr = /^0x[a-fA-F0-9]{40}$/.test(candidate);
-  const open = votes.data?.rows.filter((v) => !v.executed) ?? [];
+  const open = votes.data?.rows.filter((v) => !v.executed && !v.isExpired) ?? [];
+  const expired = votes.data?.rows.filter((v) => !v.executed && v.isExpired) ?? [];
 
   const allUsers = users.data?.users ?? [];
   const matchUser = (u: AdminUser) => {
@@ -464,6 +135,7 @@ export function GovernancePage() {
                 </CardHeader>
                 <CardContent>
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={users.isLoading}
                     isError={users.isError}
                     error={users.error}
@@ -592,6 +264,7 @@ export function GovernancePage() {
                 </CardHeader>
                 <CardContent>
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={votes.isLoading}
                     isError={votes.isError}
                     error={votes.error}
@@ -605,25 +278,42 @@ export function GovernancePage() {
                       {open.map((v) => (
                         <div
                           key={v.voteId}
-                          className="flex flex-wrap items-center gap-3 text-sm"
+                          className="flex flex-wrap items-center gap-3 rounded-xl border border-black/5 p-3 text-sm"
                         >
                           <Link
                             to={`/governance/votes/${v.voteId}`}
-                            className="min-w-0 flex-1 hover:underline"
+                            className="min-w-0 flex-1"
                           >
-                            #{v.voteId} · {v.isDevote ? "Devote" : "Grant"}{" "}
-                            {v.roleToTarget} →{" "}
-                            <span className="font-mono">
-                              {formatShortenAddress(v.candidate)}
-                            </span>
+                            <UserCell
+                              user={v.candidateUser}
+                              wallet={v.candidate}
+                              size="md"
+                            />
                           </Link>
+                          <div className="flex flex-col items-start gap-1 sm:items-end">
+                            <span className="font-mono text-xs text-muted-foreground">
+                              #{v.voteId}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Badge
+                                variant={v.isDevote ? "destructive" : "default"}
+                                className="rounded-sm"
+                              >
+                                {v.isDevote ? "Devote" : "Grant"}
+                              </Badge>
+                              <Badge variant="secondary" className="rounded-sm">
+                                Diajukan sebagai {roleLabel(v.roleToTarget)}
+                              </Badge>
+                            </div>
+                          </div>
+                          <VoteDeadline start={v.submittedAt} compact />
                           <RoleVoteCount
                             voteId={v.voteId}
                             threshold={adminThreshold}
                           />
                           <ConfirmButton
                             triggerLabel="Setujui"
-                            triggerProps={{ size: "sm", color: "primary" }}
+                            triggerProps={{ size: "sm", color: "primary", isDisabled: v.isExpired }}
                             title={`Setujui usulan peran #${v.voteId}?`}
                             confirmLabel="Ya, kirim vote"
                             toasts={{
@@ -643,6 +333,64 @@ export function GovernancePage() {
                 </CardContent>
               </Card>
 
+              {expired.length > 0 && (
+                <Card className="rounded-2xl border-amber-400/50 shadow-none">
+                  <CardHeader className="flex-row items-center justify-between space-y-0 font-display font-semibold tracking-tight">
+                    <span>Voting Peran Kedaluwarsa</span>
+                    <Badge variant="secondary" className="rounded-sm">
+                      {expired.length} usulan
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-3 text-sm text-muted-foreground">
+                      Usulan ini sudah melewati batas waktu voting (7 hari) dan
+                      tidak bisa disetujui lagi on-chain. Butuh usulan baru
+                      kalau perubahan peran ini masih diperlukan.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {expired.map((v) => (
+                        <div
+                          key={v.voteId}
+                          className="flex flex-wrap items-center gap-3 rounded-xl border border-black/5 p-3 text-sm"
+                        >
+                          <Link
+                            to={`/governance/votes/${v.voteId}`}
+                            className="min-w-0 flex-1"
+                          >
+                            <UserCell
+                              user={v.candidateUser}
+                              wallet={v.candidate}
+                              size="md"
+                            />
+                          </Link>
+                          <div className="flex flex-col items-start gap-1 sm:items-end">
+                            <span className="font-mono text-xs text-muted-foreground">
+                              #{v.voteId}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Badge
+                                variant={v.isDevote ? "destructive" : "default"}
+                                className="rounded-sm"
+                              >
+                                {v.isDevote ? "Devote" : "Grant"}
+                              </Badge>
+                              <Badge variant="secondary" className="rounded-sm">
+                                Diajukan sebagai {roleLabel(v.roleToTarget)}
+                              </Badge>
+                            </div>
+                          </div>
+                          <RoleVoteCount
+                            voteId={v.voteId}
+                            threshold={adminThreshold}
+                          />
+                          <VoteDeadline start={v.submittedAt} compact />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className="rounded-2xl border-black/5 shadow-none">
                 <CardHeader className="flex-row items-center gap-2 space-y-0 font-display font-semibold tracking-tight">
                   <Users className="h-4 w-4 text-brand-blue" />
@@ -659,6 +407,7 @@ export function GovernancePage() {
                     className="max-w-xs"
                   />
                   <QueryState
+                    skeleton={<BrandLoader />}
                     isLoading={users.isLoading}
                     isError={users.isError}
                     error={users.error}

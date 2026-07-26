@@ -29,7 +29,7 @@ services/     # modul pemanggil API (authApi, programApi, votesApi, ...) — unw
 hooks/        # React Query + hook on-chain (useAuth, useTurnstile, useSignMilestone, useTxThenSync, ...)
 schemas/      # skema Zod (auth, program, profile, withdraw)
 types/        # tipe domain (plain .ts, bukan .d.ts)
-utils/        # format, cn, error, bft, poll
+utils/        # format, cn, error, bft, poll, cookie (session hint)
 routes/       # AppRoutes (semua route lazy)
 pages/        # halaman: landing, public/*, dashboard/*, auth
 components/    # backgrounds, charts, landing, layout, motion, ui (shadcn)
@@ -38,6 +38,11 @@ components/    # backgrounds, charts, landing, layout, motion, ui (shadcn)
 **Pola aksi on-chain:** tulis via Wagmi `writeContract` (BUKAN API) → tunggu receipt →
 poll endpoint read (React Query `refetchInterval`) sampai webhook memperbarui backend → tampilkan
 state "menunggu sinkronisasi" (tidak pernah optimistic-success). Diabstraksi di `useTxThenSync`.
+
+> **Sesi login:** `token` JWT disimpan sebagai cookie `httpOnly` (tak bisa dibaca JS) — `axios`
+> dipanggil dengan `withCredentials: true`, tanpa token disimpan di `localStorage`. `useMe()`
+> (`hooks/useAuth.ts`) hanya memanggil `GET /auth/me` jika cookie penanda `has_session` ada
+> (`utils/cookie.ts`), supaya visitor yang jelas belum login tidak menembak endpoint itu sama sekali.
 
 ## Environment (`apps/web/.env`)
 

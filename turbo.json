@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
     "db:generate": {
       "cache": false,
       "outputs": []
@@ -11,10 +11,10 @@
     },
     "build": {
       "dependsOn": ["^build", "db:generate"],
-      "outputs": [".next/**", "dist/**"]
+      "outputs": ["dist/**"]
     },
-    "lint": {
-      "dependsOn": ["^build"]
+    "typecheck": {
+      "dependsOn": ["^build", "db:generate"]
     },
     "dev": {
       "cache": false,

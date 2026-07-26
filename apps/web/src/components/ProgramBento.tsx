@@ -44,7 +44,7 @@ export function ProgramBento({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {programs.map((p) => {
-        const cover = p.programURLs?.[0];
+        const cover = p.images?.[0]?.url;
         const picLabel = p.pic?.name ?? p.executorName ?? "?";
         const meta = [p.category, p.regency].filter(Boolean).join(" · ");
         return (

@@ -42,7 +42,7 @@ export function ResetPasswordPage() {
     <AuthLayout
       title="Atur Ulang Password"
       subtitle="Buat password baru untuk akun Anda."
-      icon={<LockKeyhole className="h-7 w-7" strokeWidth={2.2} />}
+      icon={<LockKeyhole className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} />}
       greeting={{
         title: (
           <>
@@ -65,7 +65,7 @@ export function ResetPasswordPage() {
     >
       {!token ? (
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 sm:h-14 sm:w-14">
             <TriangleAlert className="h-7 w-7" />
           </span>
           <div>

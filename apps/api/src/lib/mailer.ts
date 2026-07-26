@@ -54,7 +54,6 @@ export async function sendTemplateEmail(params: IEmail): Promise<void> {
   });
 
   if (!res.ok) {
-    // Body Brevo menjelaskan sebabnya (mis. sender belum diverifikasi); tidak memuat api-key.
     const detail = await res.text().catch(() => "");
     throw new Error(`Brevo send failed (${res.status}): ${detail}`);
   }

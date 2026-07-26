@@ -3,6 +3,7 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
   updateProfileSchema,
 } from "../validators/authValidator";
@@ -95,6 +96,22 @@ export default {
     const profile = await authService.getMe(user.id);
 
     response.success(res, profile);
+  },
+
+  // POST /api/v1/auth/resend-verification
+  async resendVerification(req: Request, res: Response): Promise<void> {
+    const parsed = resendVerificationSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw new AppError(parsed.error.errors[0].message, 400);
+    }
+
+    await authService.resendVerification(parsed.data.email);
+
+    response.success(
+      res,
+      "If the email is registered and not yet verified, a new verification link has been sent.",
+    );
   },
 
   // POST /api/v1/auth/forgot-password

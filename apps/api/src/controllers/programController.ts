@@ -68,6 +68,13 @@ export default {
     response.success(res, payload);
   },
 
+  // GET /api/v1/programs/my-proposal-votes
+  async myProposalVotes(req: Request, res: Response): Promise<void> {
+    const user = req.user!;
+    const result = await programService.getMyProposalVotes(user.id);
+    response.success(res, result);
+  },
+
   // POST /api/v1/programs/:id/freeze-evidence
   async freezeEvidence(req: Request, res: Response): Promise<void> {
     const user = req.user!;

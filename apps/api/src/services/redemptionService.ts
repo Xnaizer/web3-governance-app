@@ -44,7 +44,7 @@ export async function listRedemptions(params: {
       : {};
   const cacheKey = `redemptions:list:${status ?? "all"}:${page}:${limit}`;
 
-  return cacheAside(cacheKey, 180, async () => {
+  return cacheAside(cacheKey, 30, async () => {
     const [redemptions, total] = await Promise.all([
       prisma.redemption.findMany({
         where,
@@ -69,7 +69,7 @@ export async function listRedemptions(params: {
 }
 
 export async function getRedemptionById(redemptionId: number) {
-  return cacheAside(`redemptions:detail:${redemptionId}`, 180, async () => {
+  return cacheAside(`redemptions:detail:${redemptionId}`, 30, async () => {
     const row = await prisma.redemption.findUnique({
       where: { redemptionId },
       select: SELECT,
@@ -83,7 +83,7 @@ export async function getRedemptionById(redemptionId: number) {
 
 export async function listRedemptionsByPic(wallet: string) {
   const picWallet = wallet.toLowerCase();
-  return cacheAside(`redemptions:pic:${picWallet}`, 180, async () =>
+  return cacheAside(`redemptions:pic:${picWallet}`, 30, async () =>
     prisma.redemption.findMany({
       where: { picWallet },
       select: SELECT,
@@ -93,7 +93,7 @@ export async function listRedemptionsByPic(wallet: string) {
 }
 
 export async function getRedemptionStats() {
-  return cacheAside("redemptions:stats", 180, async () => {
+  return cacheAside("redemptions:stats", 30, async () => {
     const [pending, settled, cancelled, settledRows, pendingRows] =
       await Promise.all([
         prisma.redemption.count({ where: { status: "PENDING" } }),

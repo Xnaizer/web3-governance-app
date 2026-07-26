@@ -23,7 +23,7 @@ export function AllocationMeter({
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="font-display text-2xl font-semibold text-brand-blue">
+        <span className="font-display text-xl font-semibold text-brand-blue sm:text-2xl">
           {formatIDR(allocated)}
         </span>
         <span className="text-sm text-default-500">

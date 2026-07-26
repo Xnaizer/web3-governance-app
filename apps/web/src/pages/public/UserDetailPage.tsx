@@ -75,7 +75,7 @@ export function UserDetailPage() {
             }
           >
             <div className="mt-5 flex flex-wrap items-center gap-4">
-              <Avatar className="h-16 w-16 text-lg ring-2 ring-white/20">
+              <Avatar className="h-14 w-14 text-base ring-2 ring-white/20 sm:h-16 sm:w-16 sm:text-lg">
                 {u.profilePictureURL && (
                   <AvatarImage src={u.profilePictureURL} alt={u.username} />
                 )}

@@ -2,3 +2,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# @solana/* currently declares TypeScript ^5 as a peer, while this workspace
+# intentionally uses TypeScript 7. Allow that newer compiler version.
+peerDependencyRules:
+  allowedVersions:
+    typescript: '7'

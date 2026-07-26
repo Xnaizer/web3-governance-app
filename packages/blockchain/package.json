@@ -7,18 +7,23 @@
     "test": "hardhat test",
     "deploy": "hardhat run scripts/deploy.ts",
     "deploy-base": "hardhat run scripts/deploy.ts --network base_sepolia",
-    "test-scenario": "hardhat run scripts/test-scenario.ts"
+    "test-scenario": "hardhat run scripts/test-scenario.ts",
+    "typecheck": "tsc --noEmit",
+    "verify": "hardhat verify --network base_sepolia",
+    "fix-delegation": "tsx scripts/revoked-7702.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.7",
+    "@nomicfoundation/hardhat-verify": "^3.0.21",
     "@types/node": "^22.19.21",
+    "dotenv": "^17.4.2",
     "hardhat": "^3.9.0",
-    "ts-node": "^10.9.2",
-    "typescript": "5.6.2",
-    "dotenv": "^17.4.2"
+    "tsx": "^4.23.1",
+    "typescript": "7.0.2"
   },
   "type": "module",
   "dependencies": {
-    "@openzeppelin/contracts": "^5.6.1"
+    "@openzeppelin/contracts": "^5.6.1",
+    "viem": "^2.53.1"
   }
 }

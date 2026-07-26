@@ -15,7 +15,7 @@ export function SupportWidget() {
           "w-72 origin-bottom-right overflow-hidden rounded-2xl border border-black/5 bg-background shadow-xl transition-all duration-200",
           open
             ? "pointer-events-auto scale-100 opacity-100"
-            : "pointer-events-none scale-90 opacity-0",
+            : "pointer-events-none scale-90 opacity-0 hidden",
         )}
       >
         <div className="relative overflow-hidden bg-[#0b1220] p-5 text-white">

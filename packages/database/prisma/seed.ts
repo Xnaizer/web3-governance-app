@@ -75,6 +75,7 @@ interface SeededUser {
   id: string;
   walletAddress: string;
   role: string;
+  reputationScore: number;
 }
 
 async function main() {
@@ -130,7 +131,12 @@ async function main() {
           height: 300,
         }),
       },
-      select: { id: true, walletAddress: true, role: true },
+      select: {
+        id: true,
+        walletAddress: true,
+        role: true,
+        reputationScore: true,
+      },
     });
     return user as SeededUser;
   }
@@ -324,16 +330,23 @@ async function main() {
           fiscalYear: faker.helpers.arrayElement([2024, 2025, 2026]),
           plannedStartDate: faker.date.past({ years: 1 }),
           plannedEndDate: faker.date.future({ years: 1 }),
-          programURLs: Array.from(
-            { length: faker.number.int({ min: 1, max: 3 }) },
-            () => faker.image.urlPicsumPhotos({ width: 800, height: 600 }),
-          ),
           ipfsCid: faker.datatype.boolean()
             ? `bafy${faker.string.alphanumeric(52).toLowerCase()}`
             : null,
         };
 
     const program = await prisma.program.create({ data: base as any });
+
+    const photoCount = faker.number.int({ min: 0, max: 3 });
+    for (let p = 0; p < photoCount; p++) {
+      await prisma.programImage.create({
+        data: {
+          programId: program.programId,
+          url: faker.image.urlPicsumPhotos({ width: 800, height: 600 }),
+          publicId: `seed/programs/${program.programId}/${p}`,
+        },
+      });
+    }
 
     if (!isOrphan) {
       const real = computeProgramHash({

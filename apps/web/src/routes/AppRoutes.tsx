@@ -32,6 +32,11 @@ const VerifyEmailPage = lazy(() =>
     default: m.VerifyEmailPage,
   })),
 );
+const ResendVerificationPage = lazy(() =>
+  import("../pages/ResendVerificationPage").then((m) => ({
+    default: m.ResendVerificationPage,
+  })),
+);
 const ForgotPasswordPage = lazy(() =>
   import("../pages/ForgotPasswordPage").then((m) => ({
     default: m.ForgotPasswordPage,
@@ -65,6 +70,11 @@ const VotesPage = lazy(() =>
 const VoteDetailPage = lazy(() =>
   import("../pages/public/VoteDetailPage").then((m) => ({
     default: m.VoteDetailPage,
+  })),
+);
+const ProgramVotesPage = lazy(() =>
+  import("../pages/public/ProgramVotesPage").then((m) => ({
+    default: m.ProgramVotesPage,
   })),
 );
 const RedemptionsPage = lazy(() =>
@@ -157,6 +167,10 @@ export function AppRoutes() {
         <Route path="/governance/roles" element={<RoleLogsPage />} />
         <Route path="/governance/votes" element={<VotesPage />} />
         <Route path="/governance/votes/:id" element={<VoteDetailPage />} />
+        <Route
+          path="/governance/program-votes"
+          element={<ProgramVotesPage />}
+        />
         <Route path="/gateway/redemptions" element={<RedemptionsPage />} />
         <Route
           path="/register"
@@ -184,6 +198,10 @@ export function AppRoutes() {
         />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route
+          path="/resend-verification"
+          element={<ResendVerificationPage />}
+        />
 
         <Route
           element={

@@ -41,6 +41,13 @@ router.get(
 );
 
 router.post(
+    "/resend-verification",
+    authLimiter,
+    asyncHandler(verifyTurnstile),
+    asyncHandler(authController.resendVerification)
+);
+
+router.post(
     "/forgot-password",
     authLimiter,
     asyncHandler(verifyTurnstile),

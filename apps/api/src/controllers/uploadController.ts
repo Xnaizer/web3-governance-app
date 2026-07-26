@@ -11,6 +11,21 @@ function requireFile(req: Request) {
   return req.file;
 }
 
+function requireAsset(req: Request): { url: string; publicId: string } {
+  const { url, publicId } = req.body ?? {};
+
+  if (
+    typeof url !== "string" ||
+    !url ||
+    typeof publicId !== "string" ||
+    !publicId
+  ) {
+    throw new AppError("url and publicId are required", 400);
+  }
+
+  return { url, publicId };
+}
+
 function parseProgramId(req: Request): number {
   const id = Number(req.params.programId);
 
@@ -22,14 +37,55 @@ function parseProgramId(req: Request): number {
 }
 
 export default {
+  async signProgramImage(req: Request, res: Response): Promise<void> {
+    const result = await uploadService.signProgramImageUpload(
+      req.user!.id,
+      parseProgramId(req),
+    );
+    response.success(res, result);
+  },
+
   async programImage(req: Request, res: Response): Promise<void> {
     const result = await uploadService.attachProgramImage(
       req.user!.id,
       parseProgramId(req),
-      requireFile(req),
+      requireAsset(req),
     );
 
     response.created(res, result);
+  },
+
+  async replaceProgramImage(req: Request, res: Response): Promise<void> {
+    const imageId = req.params.imageId;
+
+    if (!imageId) {
+      throw new AppError("Invalid image id", 400);
+    }
+
+    const result = await uploadService.replaceProgramImage(
+      req.user!.id,
+      parseProgramId(req),
+      imageId,
+      requireAsset(req),
+    );
+
+    response.success(res, result);
+  },
+
+  async deleteProgramImage(req: Request, res: Response): Promise<void> {
+    const imageId = req.params.imageId;
+
+    if (!imageId) {
+      throw new AppError("Invalid image id", 400);
+    }
+
+    const result = await uploadService.deleteProgramImage(
+      req.user!.id,
+      parseProgramId(req),
+      imageId,
+    );
+
+    response.success(res, result);
   },
 
   async programPinData(req: Request, res: Response): Promise<void> {
@@ -57,6 +113,20 @@ export default {
     response.created(res, result);
   },
 
+  async signWithdrawalReceipt(req: Request, res: Response): Promise<void> {
+    const withdrawalId = req.params.withdrawalId;
+
+    if (!withdrawalId) {
+      throw new AppError("Invalid withdrawal id", 400);
+    }
+
+    const result = await uploadService.signWithdrawalReceiptUpload(
+      req.user!.id,
+      withdrawalId,
+    );
+    response.success(res, result);
+  },
+
   async withdrawalReceipt(req: Request, res: Response): Promise<void> {
     const withdrawalId = req.params.withdrawalId;
 
@@ -67,24 +137,34 @@ export default {
     const result = await uploadService.attachWithdrawalReceipt(
       req.user!.id,
       withdrawalId,
-      requireFile(req),
+      requireAsset(req),
     );
 
     response.created(res, result);
   },
 
+  async signUserAvatar(req: Request, res: Response): Promise<void> {
+    const result = await uploadService.signUserAvatarUpload(req.user!.id);
+    response.success(res, result);
+  },
+
   async userAvatar(req: Request, res: Response): Promise<void> {
     const result = await uploadService.updateUserAvatar(
       req.user!.id,
-      requireFile(req),
+      requireAsset(req),
     );
+    response.success(res, result);
+  },
+
+  async signUserBanner(req: Request, res: Response): Promise<void> {
+    const result = await uploadService.signUserBannerUpload(req.user!.id);
     response.success(res, result);
   },
 
   async userBanner(req: Request, res: Response): Promise<void> {
     const result = await uploadService.updateUserBanner(
       req.user!.id,
-      requireFile(req),
+      requireAsset(req),
     );
     response.success(res, result);
   },

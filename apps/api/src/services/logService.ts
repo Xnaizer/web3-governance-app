@@ -14,7 +14,7 @@ export async function listRoleChangeLogs(page: number, limit: number) {
   const skip = (page - 1) * limit;
   const cacheKey = `logs:roles:${page}:${limit}`;
 
-  return cacheAside(cacheKey, 180, async () => {
+  return cacheAside(cacheKey, 30, async () => {
     const [logs, total] = await Promise.all([
       prisma.roleChangeLog.findMany({
         select: {

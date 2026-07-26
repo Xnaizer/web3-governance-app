@@ -49,6 +49,13 @@ export function useRegister() {
   return useMutation({ mutationFn: authApi.register });
 }
 
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (input: { email: string; turnstileToken?: string }) =>
+      authApi.resendVerification(input.email, input.turnstileToken),
+  });
+}
+
 export function useForgotPassword() {
   return useMutation({
     mutationFn: (input: { email: string; turnstileToken?: string }) =>

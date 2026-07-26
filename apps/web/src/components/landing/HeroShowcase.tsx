@@ -116,7 +116,7 @@ export function HeroShowcase() {
               loading="lazy"
             />
             <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6 text-white">
-              <p className="font-display text-2xl font-semibold">
+              <p className="font-display text-xl font-semibold sm:text-2xl">
                 {panel.label}
               </p>
               <p className="text-sm text-white/80">{panel.sub}</p>

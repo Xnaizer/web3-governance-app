@@ -96,7 +96,7 @@ export async function listPublicUsers(query: {
   const cacheKey = `public:users:${role ?? "all"}:${
     sort ?? "recent"
   }:${page}:${limit}`;
-  return cacheAside(cacheKey, 180, async () => {
+  return cacheAside(cacheKey, 30, async () => {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -231,7 +231,7 @@ export async function setVerified(userId: string, isVerified: boolean) {
 export async function getPublicUserProfile(userId: string) {
   const cacheKey = `public:user:${userId}`;
 
-  return cacheAside(cacheKey, 180, async () => {
+  return cacheAside(cacheKey, 30, async () => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {

@@ -32,7 +32,7 @@ export function VerifyEmailPage() {
     <AuthLayout
       title="Verifikasi Email"
       subtitle="Kami memeriksa tautan verifikasi Anda."
-      icon={<MailCheck className="h-7 w-7" strokeWidth={2.2} />}
+      icon={<MailCheck className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} />}
       greeting={{
         title: (
           <>
@@ -50,7 +50,7 @@ export function VerifyEmailPage() {
 
       {state.status === "ok" && (
         <div className="flex flex-col items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-mint/15 text-brand-mint">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-mint/15 text-brand-mint sm:h-12 sm:w-12">
             <CheckCircle2 className="h-6 w-6" />
           </span>
           <p className="text-sm text-foreground">
@@ -64,15 +64,19 @@ export function VerifyEmailPage() {
 
       {state.status === "error" && (
         <div className="flex flex-col items-start gap-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-            <XCircle className="h-6 w-6" />
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive sm:h-12 sm:w-12">
+            <XCircle className="h-5 w-5 sm:h-6 sm:w-6" />
           </span>
-          <p className="text-sm text-destructive">{state.message}</p>
-          <div className="flex w-full gap-3">
-            <Button asChild variant="secondary" className="flex-1 font-medium">
-              <Link to="/register">Daftar ulang</Link>
-            </Button>
+          <p className="text-xs text-destructive sm:text-sm">{state.message}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Tautan verifikasi hanya berlaku 24 jam. Jika sudah kedaluwarsa,
+            minta tautan baru — akun Anda tidak perlu didaftarkan ulang.
+          </p>
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
             <Button asChild className="flex-1 font-medium">
+              <Link to="/resend-verification">Kirim ulang verifikasi</Link>
+            </Button>
+            <Button asChild variant="secondary" className="flex-1 font-medium">
               <Link to="/login">Ke masuk</Link>
             </Button>
           </div>

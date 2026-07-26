@@ -36,7 +36,7 @@ export function ForgotPasswordPage() {
     <AuthLayout
       title="Lupa Password"
       subtitle="Kami akan mengirim tautan atur ulang ke email Anda."
-      icon={<KeyRound className="h-7 w-7" strokeWidth={2.2} />}
+      icon={<KeyRound className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2.2} />}
       greeting={{
         title: (
           <>

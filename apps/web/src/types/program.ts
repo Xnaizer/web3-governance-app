@@ -1,6 +1,7 @@
 import type { Integrity, DisplayTab } from "./common";
 import type { Milestone } from "./milestone";
 import type { FreezeOutcome, UnfreezeVote } from "./vote";
+import type { VoteUserMini } from "../services/votesApi";
 
 export type ProgramStatus =
   | "PENDING"
@@ -40,8 +41,13 @@ export interface ProgramListItem {
   txHash: string | null;
   submittedAt: string | null;
   createdAt: string;
-  programURLs?: string[];
+  images?: ProgramImage[];
   pic?: ProgramPic | null;
+}
+
+export interface ProgramImage {
+  id: string;
+  url: string;
 }
 
 export interface ProgramPic {
@@ -53,11 +59,19 @@ export interface ProgramPic {
   role: string;
 }
 
+export interface ProposalVoter {
+  wallet: string;
+  votedAt: string;
+  txHash: string | null;
+  user: VoteUserMini | null;
+}
+
 export interface ProgramDetail extends ProgramListItem {
   milestones: Milestone[];
   withdrawals: Withdrawal[];
   freezeOutcome: FreezeOutcome | null;
   unfreezeVote: UnfreezeVote | null;
+  proposalVoters: ProposalVoter[];
 }
 
 export interface Withdrawal {

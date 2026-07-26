@@ -7,7 +7,7 @@ import { RedemptionStatusChip } from "../../components/RedemptionStatusChip";
 import { RedemptionStatsCards } from "../../components/RedemptionStatsCards";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
+import { BrandLoader } from "@/components/ui/BrandLoader";
 import { useGatewayOwner } from "../../hooks/useGatewayOwner";
 import { useRedemptions, useRedemptionStats } from "../../hooks/useRedemptions";
 import {
@@ -105,7 +105,7 @@ export function GatewayOperatorPage() {
   const stats = statsQ.data;
   const pendingRows = pendingQ.data?.rows ?? [];
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <BrandLoader />;
 
   if (!isOperator) {
     return (

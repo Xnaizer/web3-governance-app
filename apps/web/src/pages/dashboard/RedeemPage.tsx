@@ -99,7 +99,7 @@ export function RedeemPage() {
               <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Saldo e-IDR
               </p>
-              <p className="mt-1 font-display text-3xl font-semibold tracking-tight text-brand-blue">
+              <p className="mt-1 font-display text-2xl font-semibold tracking-tight text-brand-blue sm:text-3xl">
                 {formatIDR(balance.toString())}
               </p>
             </CardContent>

@@ -7,10 +7,6 @@ import { notFoundHandler } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 import apiRouter from "./routes";
 import webhookRouter from "./routes/webhook";
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { ExpressAdapter } from "@bull-board/express";
-import { allQueues } from "./queues/queues";
 import { env } from "./config/env";
 import { pinoHttp } from "pino-http";
 import { logger } from "./lib/logger";
@@ -66,23 +62,6 @@ app.get("/health/deep", asyncHandler(async (_req: Request, res: Response) => {
         meta: deepCache.checks,
     });
 }));
-
-const serverAdapter = new ExpressAdapter();
-serverAdapter.setBasePath("/admin/queues");
-createBullBoard({
-    queues: allQueues.map((q) => new BullMQAdapter(q)),
-    serverAdapter
-});
-
-function queueAuth(req: Request, res: Response, next: express.NextFunction): void {
-    const header = req.headers.authorization ?? "";
-    const [, b64] = header.split(" ");
-    const [user, pass] = Buffer.from(b64 ?? "", "base64").toString().split(":");
-    if (user === env.QUEUE_ADMIN_USER && pass === env.QUEUE_ADMIN_PASS) return next();
-    res.set("WWW-Authenticate", 'Basic realm="queues"').status(401).send("Auth required");
-}
-
-app.use("/admin/queues", queueAuth, serverAdapter.getRouter());
 
 app.use("/api/v1", apiRouter);
 app.use(notFoundHandler);

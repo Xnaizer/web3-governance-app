@@ -1,7 +1,6 @@
 import { SmoothScroll } from "../providers/SmoothScroll";
 import { LandingNav } from "../components/landing/LandingNav";
 import { LandingHero } from "../components/landing/LandingHero";
-import { TechMarquee } from "../components/landing/TechMarquee";
 import { HeroShowcase } from "../components/landing/HeroShowcase";
 import { FeatureShowcase } from "../components/landing/FeatureShowcase";
 import { StickyInfo } from "../components/landing/StickyInfo";
@@ -10,6 +9,7 @@ import { HoverFeature } from "../components/landing/HoverFeature";
 import { StatsCards } from "../components/landing/StatsCards";
 import { FrequentlyAskQuestion } from "../components/landing/FrequentlyAskQuestion";
 import { LandingFooter } from "../components/landing/LandingFooter";
+import { TechStack } from "@/components/TechStack";
 
 export function Landing() {
   return (
@@ -18,7 +18,7 @@ export function Landing() {
         <LandingNav />
         <main>
           <LandingHero />
-          <TechMarquee />
+          <TechStack />
           <HeroShowcase />
           <FeatureShowcase />
           <StickyInfo />

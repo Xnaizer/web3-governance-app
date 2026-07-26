@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { prisma, txDirect } from "../lib/prisma";
 import { hashPassword, generateToken, hashToken } from "./hashService";
 import { sendTemplateEmail } from "../lib/mailer";
 import { AppError } from "../utils/AppError";
@@ -56,7 +56,7 @@ export async function registerUser(input: RegisterInput): Promise<void> {
   const tokenHash = hashToken(rawToken);
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     const user = await tx.user.create({
       data: {
         username: input.username,
@@ -108,7 +108,7 @@ export async function verifyEmail(token: string): Promise<void> {
     throw new AppError("Verification token has expired", 400);
   }
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     await tx.user.update({
       where: {
         id: record.userId,
@@ -206,6 +206,41 @@ export async function getMe(userId: string) {
   return user;
 }
 
+export async function resendVerification(email: string): Promise<void> {
+  const target = email.toLowerCase().trim();
+
+  const user = await prisma.user.findUnique({ where: { email: target } });
+
+  if (!user || user.isActive) return;
+
+  const rawToken = generateToken();
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await txDirect(async (tx: any) => {
+    await tx.verificationToken.deleteMany({
+      where: { userId: user.id, type: "ACTIVATION" },
+    });
+
+    await tx.verificationToken.create({
+      data: { tokenHash, type: "ACTIVATION", expiresAt, userId: user.id },
+    });
+  });
+
+  const verifyUrl = `${env.FRONTEND_URL}/verify-email?token=${rawToken}`;
+
+  await sendTemplateEmail({
+    to: target,
+    subject: "Verify your GovernanceFund account",
+    template: "verify-email",
+    data: {
+      username: user.username,
+      verifyUrl,
+      year: new Date().getFullYear(),
+    },
+  });
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
   const forgotEmail = email.toLowerCase().trim();
 
@@ -272,7 +307,7 @@ export async function resetPassword(
 
   const passwordHash = await hashPassword(newPassword);
 
-  await prisma.$transaction(async (tx: any) => {
+  await txDirect(async (tx: any) => {
     await tx.user.update({
       where: {
         id: record.userId,

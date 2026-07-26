@@ -71,7 +71,7 @@ export function AuthLayout({
         <Wordmark className="relative" />
 
         <div className="relative">
-          <h2 className="max-w-md font-display text-4xl font-semibold leading-[1.1] tracking-tight">
+          <h2 className="max-w-md font-display text-3xl font-semibold leading-[1.1] tracking-tight xl:text-4xl">
             {greeting?.title ?? (
               <>
                 Dana publik untuk{" "}
@@ -80,7 +80,9 @@ export function AuthLayout({
             )}
           </h2>
           {greeting?.text && (
-            <p className="mt-4 max-w-sm text-white/60">{greeting.text}</p>
+            <p className="mt-4 max-w-sm text-sm text-white/60">
+              {greeting.text}
+            </p>
           )}
         </div>
 
@@ -108,22 +110,26 @@ export function AuthLayout({
           </Link>
         </div>
 
-        <div className="relative flex flex-1 flex-col justify-center py-8 sm:py-10">
+        <div className="relative flex flex-1 flex-col justify-center py-6 sm:py-10">
           <div className="mx-auto w-full max-w-md">
             <div className="flex items-center gap-2.5">
               {icon && <span className="shrink-0 text-brand-blue">{icon}</span>}
-              <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
                 {title}
               </h1>
             </div>
             {subtitle && (
-              <p className="mt-3 text-sm text-muted-foreground">{subtitle}</p>
+              <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
+                {subtitle}
+              </p>
             )}
 
-            <div className="mt-8">{children}</div>
+            <div className="mt-6 sm:mt-8">{children}</div>
 
             {footer && (
-              <div className="mt-6 text-sm text-muted-foreground">{footer}</div>
+              <div className="mt-5 text-xs text-muted-foreground sm:text-sm">
+                {footer}
+              </div>
             )}
           </div>
         </div>

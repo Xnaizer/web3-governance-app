@@ -1,9 +1,12 @@
 import express, { type Router } from "express";
+import { randomUUID } from "node:crypto";
 import { webhookVerify } from "../middleware/webhookVerify";
 import { asyncHandler } from "../utils/asyncHandler";
 import response from "../utils/response";
-import { webhookIngestionQueue } from "../queues/queues";
 import { isKnownEvent } from "../services/webhookService";
+import * as outboxService from "../services/outboxService";
+import type { PendingEvent } from "../services/outboxService";
+import { wake } from "../workers";
 import {
   decodeGovernanceLog,
   extractLogs,
@@ -17,20 +20,16 @@ router.post(
   webhookVerify,
   asyncHandler(async (req, res) => {
     const payload = JSON.parse(req.body.toString("utf8"));
-    let queued = 0;
+    const events: PendingEvent[] = [];
 
     if (payload.eventName) {
       if (isKnownEvent(payload.eventName)) {
-        await webhookIngestionQueue.add(
-          "event",
-          {
-            eventName: payload.eventName,
-            args: jsonSafe(payload.args ?? {}),
-            txHash: payload.txHash,
-          },
-          payload.txHash ? { jobId: `${payload.txHash}:0` } : undefined,
-        );
-        queued++;
+        events.push({
+          eventName: payload.eventName,
+          args: jsonSafe(payload.args ?? {}),
+          txHash: payload.txHash ?? `mock:${randomUUID()}`,
+          logIndex: 0,
+        });
       }
     } else {
       for (const log of extractLogs(payload)) {
@@ -38,20 +37,17 @@ router.post(
 
         if (!decoded || !isKnownEvent(decoded.eventName)) continue;
 
-        await webhookIngestionQueue.add(
-          "event",
-          {
-            eventName: decoded.eventName,
-            args: decoded.args,
-            txHash: decoded.txHash,
-          },
-          {
-            jobId: `${decoded.txHash}:${decoded.logIndex}`,
-          },
-        );
-        queued++;
+        events.push({
+          eventName: decoded.eventName,
+          args: decoded.args,
+          txHash: decoded.txHash,
+          logIndex: decoded.logIndex,
+        });
       }
     }
+
+    const queued = await outboxService.enqueue(events);
+    if (queued > 0) wake();
 
     response.success(res, { queued });
   }),

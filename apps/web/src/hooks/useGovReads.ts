@@ -1,4 +1,4 @@
-import { useReadContract } from "wagmi";
+import { useReadContract, useReadContracts, useAccount } from "wagmi";
 import { governanceContract, CHAIN_ID } from "../config/contracts";
 
 export function bftThreshold(n: number): number {
@@ -37,6 +37,27 @@ export function useProposalVoteCount(programId: number) {
     query: { enabled: programId > 0 },
   });
   return num(data);
+}
+
+export function useMyProposalVotes(programIds: number[]) {
+  const { address } = useAccount();
+
+  const { data } = useReadContracts({
+    contracts: programIds.map((id) => ({
+      ...base,
+      functionName: "hasVotedProposal",
+      args: [BigInt(id), address as `0x${string}`],
+    })),
+    query: { enabled: !!address && programIds.length > 0 },
+  });
+
+  const voted = new Set<number>();
+  (data ?? []).forEach((r, i) => {
+    if (r.status === "success" && r.result === true) {
+      voted.add(programIds[i]);
+    }
+  });
+  return voted;
 }
 
 export function useRoleVoteCount(voteId: number) {

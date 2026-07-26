@@ -28,14 +28,14 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-6 text-center">
+        <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4 text-center sm:p-6">
           <div aria-hidden className="pointer-events-none absolute inset-0">
             <div className="absolute -left-24 top-[-10%] h-96 w-96 rounded-full bg-destructive/10 blur-[120px]" />
             <div className="absolute -right-24 bottom-[-10%] h-96 w-96 rounded-full bg-brand-blue/10 blur-[120px]" />
           </div>
 
           <div className="relative flex flex-col items-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 text-destructive sm:h-12 sm:w-12">
               <AlertTriangle className="h-6 w-6" />
             </span>
             <h1 className="mt-6 font-display text-xl font-semibold tracking-tight sm:text-2xl">

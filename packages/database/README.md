@@ -4,7 +4,7 @@ Lapisan data GovernanceFund: skema Prisma, Prisma Client ter-generate, dan seed.
 `apps/api` untuk semua operasi DB.
 
 > Bagian dari monorepo [`governancefund`](../../README.md). Diimpor sebagai `@repo/database`
-> (mengekspor singleton `prisma` + re-export tipe `@prisma/client`).
+> (mengekspor singleton `prisma`, klien tambahan `prismaDirect`, + re-export tipe `@prisma/client`).
 
 ## Database
 
@@ -14,18 +14,33 @@ Datasource mendeklarasikan `url` (transaction pooler `:6543?pgbouncer=true`) dan
 
 ## Skema (`prisma/schema.prisma`)
 
-**12 enum** + **15 model**. Enum utama: `Role`, `ProposalStatus` (7 nilai, termasuk
+**12 enum** + **18 model**. Enum utama: `Role`, `ProposalStatus` (7 nilai, termasuk
 `FRAUD_CONFIRMED`), `Integrity`, `DisplayTab`, `MilestoneStatus`, `SignerRole`, `ReputationReason`
-(5), `FreezeResult`, `RedemptionStatus`, `RoleChangeType`.
+(5), `FreezeResult`, `RedemptionStatus`, `RoleChangeType`, `OutboxStatus`.
 
 Model inti: `User`, `Program` (+ lokasi/executor/kategori, semua nullable untuk orphan),
-`Milestone`, `MilestoneSignature`, `WithdrawalRecord`, `RoleVote`/`RoleVoteBallot`,
+`ProgramImage`, `Milestone`, `MilestoneSignature`, `WithdrawalRecord`, `RoleVote`/`RoleVoteBallot`,
 `UnfreezeVote`/`UnfreezeVoteBallot`, `FreezeOutcome`, `ReputationLog`, `RoleChangeLog`,
-`VerificationToken`.
+`ProposalVoteLog` (siapa vote proposal program apa), `Redemption`, `VerificationToken`.
+
+Model infrastruktur: `OutboxEvent` (antrean event on-chain yang sudah didekode, sumber untuk
+skrip backfill di `apps/api/src/scripts/`) dan `JobRun` (penanda waktu jalan terakhir job
+terjadwal, mis. rekonsiliasi).
 
 **Trigger imutabilitas** (`lock_sealed_program_fields`): baris `Program` ber-status terkunci
 (`APPROVED`/`DRAWABLE`/…/`FRAUD_CONFIRMED`/`COMPLETED`) menolak UPDATE field tersegel & DELETE —
 lapisan anti-fraud tingkat DB.
+
+## Dua Klien Prisma (`src/index.ts`)
+
+- **`prisma`** — klien default, pakai `DATABASE_URL` (transaction pooler `:6543?pgbouncer=true`).
+  Dipakai untuk hampir semua query.
+- **`prismaDirect`** — klien kedua, pakai `DIRECT_URL` (session pooler `:5432`) langsung, bukan
+  lewat pooler transaction-mode. **Wajib** dipakai untuk `prisma.$transaction(async (tx) => {...})`
+  multi-statement (mis. `createProgram` di `apps/api`), karena PgBouncer transaction-mode
+  melepas koneksi fisik ke pool di antar-statement — tidak kompatibel dengan asumsi Prisma bahwa
+  satu koneksi dipegang sepanjang `BEGIN...COMMIT`, yang berujung latensi tinggi atau error
+  `prepared statement does not exist`.
 
 ## Struktur
 
@@ -34,7 +49,7 @@ prisma/
   schema.prisma   # 12 enum + 15 model
   seed.ts         # seed variatif (@faker-js/faker, locale id_ID)
 src/
-  index.ts        # export singleton `prisma` + re-export tipe Prisma
+  index.ts        # export singleton `prisma` + `prismaDirect` + re-export tipe Prisma
 generated/        # Prisma Client ter-generate
 ```
 

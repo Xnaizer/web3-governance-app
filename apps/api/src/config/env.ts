@@ -39,8 +39,6 @@ const envSchema = z.object({
   ALCHEMY_WEBHOOK_SECRET: z
     .string()
     .min(1, "ALCHEMY_WEBHOOK_SECRET is required"),
-  QUEUE_ADMIN_USER: z.string().default("admin"),
-  QUEUE_ADMIN_PASS: z.string().min(1, "QUEUE_ADMIN_PASS is required"),
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   ENABLE_WORKERS: z
     .enum(["true", "false"])

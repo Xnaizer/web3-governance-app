@@ -10,13 +10,17 @@ interface Props {
 
 export function EmptyState({ title, description, icon, action }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-12 text-center">
-      <span className="text-3xl text-muted-foreground/50">
+    <div className="flex flex-col items-center justify-center gap-2.5 rounded-xl border border-dashed px-4 py-8 text-center sm:gap-3 sm:py-12">
+      <span className="text-2xl text-muted-foreground/50 sm:text-3xl">
         {icon ?? <Inbox />}
       </span>
-      <p className="font-medium text-foreground">{title}</p>
+      <p className="text-sm font-medium text-foreground sm:text-base">
+        {title}
+      </p>
       {description && (
-        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+        <p className="max-w-sm text-xs text-muted-foreground sm:text-sm">
+          {description}
+        </p>
       )}
       {action}
     </div>

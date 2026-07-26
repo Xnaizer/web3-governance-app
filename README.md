@@ -97,10 +97,16 @@ governancefund/
 | Layer | Teknologi utama |
 |---|---|
 | **Frontend** (`apps/web`) | Vite + React 18, React Router, Tailwind v4 (CSS-first) + shadcn/ui (Radix), Wagmi v2 + Viem + RainbowKit, React Query, react-hook-form + Zod, framer-motion/GSAP/Lenis (landing), Cloudflare Turnstile |
-| **Backend** (`apps/api`) | Express 4 + TypeScript (tsx/tsup), Prisma, BullMQ (Upstash Redis), JWT (httpOnly cookie), Brevo (email via HTTP API), Pino, Sentry, Alchemy SDK, Cloudinary + Pinata (IPFS) |
+| **Backend** (`apps/api`) | Express 4 + TypeScript (tsx/tsup), Prisma (pooler + koneksi direct khusus transaksi), cache in-memory app-level + BullMQ (Upstash Redis), JWT (httpOnly cookie), Brevo (email via HTTP API), Pino, Sentry, Alchemy SDK, Cloudinary + Pinata (IPFS) |
 | **Blockchain** (`packages/blockchain`) | Solidity 0.8.35, Hardhat 3, OpenZeppelin v5 (EIP712/ECDSA/AccessControl/ERC20), Ethers (khusus script) |
 | **Database** | Supabase PostgreSQL via Prisma 5.20 (session pooler) |
 | **Infra** | Vercel (FE), Railway (BE), Upstash Redis, Alchemy Notify webhook |
+
+> **Strategi cache:** data yang aman untuk stale sebentar (list/detail program, statistik publik,
+> jumlah validator on-chain, dll.) di-cache **in-memory di dalam proses API** (bukan Redis) — API
+> berjalan sebagai satu proses long-running, jadi tak butuh cache terdistribusi untuk data yang
+> memang bisa dihitung ulang. Redis (Upstash) tetap dipakai khusus untuk hal yang wajib
+> shared/tahan-restart: **rate limiter** dan **blocklist token JWT**. Lihat `apps/api/README.md`.
 
 ## Fitur / Lapisan Anti-Fraud
 

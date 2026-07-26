@@ -8,6 +8,7 @@ import { BrandLoader } from "../../components/ui/BrandLoader";
 import { DarkHero } from "../../components/ui/DarkHero";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { UserCell } from "../../components/UserCell";
+import { VoteDeadline } from "../../components/VoteDeadline";
 import { fetchRoleVote } from "../../services/votesApi";
 import { impliedTotalFromThreshold } from "../../utils/bft";
 import { formatShortenAddress, formatDate } from "../../utils/format";
@@ -68,6 +69,11 @@ export function VoteDetailPage() {
                 >
                   {v.executed ? "Selesai" : "Berjalan"}
                 </Badge>
+                <VoteDeadline
+                  start={v.submittedAt}
+                  resolved={v.executed}
+                  compact
+                />
               </>
             }
           />
@@ -127,6 +133,25 @@ export function VoteDetailPage() {
                   ) : (
                     <span className="font-mono">
                       {formatShortenAddress(v.candidate)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  Diajukan Oleh
+                </span>
+                <div className="mt-1.5">
+                  {v.grantedByUser ? (
+                    <UserCell
+                      user={v.grantedByUser}
+                      wallet={v.grantedBy}
+                      showRole
+                      size="md"
+                    />
+                  ) : (
+                    <span className="font-mono">
+                      {formatShortenAddress(v.grantedBy)}
                     </span>
                   )}
                 </div>

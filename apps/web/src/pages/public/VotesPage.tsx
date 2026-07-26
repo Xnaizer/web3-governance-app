@@ -52,6 +52,8 @@ export function VotesPage() {
         v.candidate,
         v.candidateUser?.name,
         v.candidateUser?.username,
+        v.grantedByUser?.name,
+        v.grantedByUser?.username,
         String(v.voteId),
         v.roleToTarget,
       ]
@@ -101,6 +103,16 @@ export function VotesPage() {
         <UserCell
           user={row.original.candidateUser}
           wallet={row.original.candidate}
+        />
+      ),
+    },
+    {
+      id: "diajukan-oleh",
+      header: "DIAJUKAN OLEH",
+      cell: ({ row }) => (
+        <UserCell
+          user={row.original.grantedByUser}
+          wallet={row.original.grantedBy}
         />
       ),
     },
@@ -169,7 +181,7 @@ export function VotesPage() {
           <DataTable
             columns={columns}
             data={filtered}
-            minWidth={640}
+            minWidth={820}
             onRowClick={(v) => navigate(`/governance/votes/${v.voteId}`)}
           />
         </Reveal>

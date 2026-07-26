@@ -26,10 +26,12 @@ export async function authMiddleware(
         throw new AppError("Invalid or expired token", 401);
     }
 
+    console.time("auth:redis-mget");
     const [isBlocked, validAfter] = await redis.mget(
         `blocklist:${payload.jti}`,
         `tokensValidAfter:${payload.sub}`,
     );
+    console.timeEnd("auth:redis-mget");
 
     if(isBlocked) {
         throw new AppError("Token has been revoked", 401);

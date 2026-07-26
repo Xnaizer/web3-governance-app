@@ -24,13 +24,13 @@ export function PageHeader({
   const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex items-start gap-2">
+      <div className="flex min-w-0 items-start gap-2">
         {back && (
           <Button
             size="icon"
             variant="ghost"
             aria-label="Kembali"
-            className="mt-1"
+            className="mt-0.5 shrink-0"
             onClick={() =>
               typeof back === "string" ? navigate(back) : navigate(-1)
             }
@@ -38,23 +38,23 @@ export function PageHeader({
             <ArrowLeft className="h-4 w-4" />
           </Button>
         )}
-        <div>
+        <div className="min-w-0">
           {eyebrow && (
-            <span className="text-xs font-medium uppercase tracking-[0.25em] text-brand-blue">
+            <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-brand-blue sm:text-xs">
               {eyebrow}
             </span>
           )}
           <h1
             className={cn(
-              "font-display text-2xl font-semibold tracking-tight sm:text-3xl",
-              eyebrow && "mt-2",
+              "font-display text-xl font-semibold tracking-tight sm:text-2xl",
+              eyebrow && "mt-1.5 sm:mt-2",
               gradient && "text-gradient",
             )}
           >
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+            <p className="mt-1.5 max-w-2xl text-xs text-muted-foreground sm:text-sm">
               {subtitle}
             </p>
           )}

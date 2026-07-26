@@ -35,4 +35,9 @@ export default defineConfig({
     cache:     "./cache",
     artifacts: "./artifacts",
   },
+  verify: {
+    etherscan:{
+      apiKey: process.env.ETHERSCAN_API_KEY
+    }
+  }
 });

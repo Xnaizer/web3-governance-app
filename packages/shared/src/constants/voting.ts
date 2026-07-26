@@ -1,0 +1,2 @@
+export const VOTE_DURATION_DAYS = 7;
+export const VOTE_DURATION_MS = VOTE_DURATION_DAYS * 24 * 60 * 60 * 1000;

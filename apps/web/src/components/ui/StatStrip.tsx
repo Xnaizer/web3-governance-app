@@ -26,7 +26,7 @@ export function StatStrip({
       )}
     >
       {items.map((it, i) => (
-        <div key={i} className="flex-1 px-5 py-4">
+        <div key={i} className="flex-1 px-4 py-3 sm:px-5 sm:py-4">
           <span className="flex items-center gap-2">
             {it.icon ? (
               <span
@@ -41,12 +41,12 @@ export function StatStrip({
                 style={{ backgroundColor: it.color ?? "#4899EA" }}
               />
             ) : null}
-            <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]">
               {it.label}
             </span>
           </span>
           <p
-            className="mt-1.5 font-display text-2xl font-semibold tracking-tight"
+            className="mt-1 font-display text-lg font-semibold tracking-tight sm:mt-1.5 sm:text-2xl"
             style={it.color ? { color: it.color } : undefined}
           >
             {it.value}

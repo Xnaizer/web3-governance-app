@@ -123,7 +123,7 @@ contract RupiahToken is ERC20, IRupiahToken {
      *      Triggered inside executePicWithdrawal() after
      *      milestone state is confirmed DRAWABLE.
      * @param to PIC wallet address.
-     * @param amount Amount in Wei (18 decimals).
+     * @param amount Amount in  (0 decimals).
      */
     function mint(address to, uint256 amount) external override onlyGovernance {
         require(to != address(0), "RupiahToken: Mint to zero address");
@@ -139,7 +139,7 @@ contract RupiahToken is ERC20, IRupiahToken {
      * @dev Only callable by TrustedGateway contract.
      *      Triggered inside depositAndBurnToken() after PIC transfers
      *      tokens to the gateway via transferFrom().
-     * @param amount Amount in Wei (18 decimals).
+     * @param amount Amount in  (0 decimals).
      */
 
     function burn(uint256 amount) external override onlyGateway {
@@ -174,7 +174,7 @@ contract RupiahToken is ERC20, IRupiahToken {
      *         to transfer on behalf of the owner.
      * @param owner The Token owner address.
      * @param spender The spender address (TrustedGatewayBurner contract).
-     * @return remaining Allowance amount in Wei (18 decimals).
+     * @return remaining Allowance amount in  (0 decimals).
      */
     function allowance(address owner, address spender) public view override(ERC20, IRupiahToken) returns (uint256 remaining) {
         return super.allowance(owner, spender);
@@ -183,7 +183,7 @@ contract RupiahToken is ERC20, IRupiahToken {
     /**
      * @notice Transfers tokens from caller to recipient.
      * @param to Recipient address.
-     * @param amount Amount to transfer in Wei (18 decimals).
+     * @param amount Amount to transfer in  (0 decimals).
      * @return success True if transfer succeeded.
      */
     function transfer(address to, uint256 amount) public override(ERC20, IRupiahToken) returns(bool success) {
@@ -200,7 +200,7 @@ contract RupiahToken is ERC20, IRupiahToken {
      * @notice Approves a spender to transfer tokens on behalf of caller.
      * @dev PIC must call this before TrustedGatewayBurner can pull tokens.
      * @param spender The address authorized to spend (TrustedGatewayBurner).
-     * @param amount Amount approved in Wei (18 decimals).
+     * @param amount Amount approved in  (0 decimals).
      * @return success Return boolean values from approval.
      */
     function approve(address spender, uint256 amount) public override(ERC20, IRupiahToken) returns (bool success) {
@@ -212,11 +212,12 @@ contract RupiahToken is ERC20, IRupiahToken {
      * @dev Used by TrustedGatewayBurner to pull tokens from PIC Wallet.
      * @param from The token owner address.
      * @param to The recipient address.
-     * @param amount Amount to transfer in Wei (18 decimals).
+     * @param amount Amount to transfer in  (0 decimals).
      * @return success Return boolean values from TransferFrom.
      */
     function transferFrom(address from, address to, uint256 amount) public override(ERC20, IRupiahToken) returns(bool success) {
         require(to == gatewayContract, "RupiahToken: Only transfers to gateway allowed");
         return super.transferFrom(from, to, amount);
     }
+
 }

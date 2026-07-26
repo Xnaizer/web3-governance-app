@@ -23,6 +23,14 @@ router.get(
 );
 
 router.get(
+  "/my-proposal-votes",
+  readLimiter,
+  asyncHandler(authMiddleware),
+  requireRole(["VALIDATOR"]),
+  asyncHandler(programController.myProposalVotes),
+);
+
+router.get(
   "/:id",
   readLimiter,
   asyncHandler(authMiddleware),

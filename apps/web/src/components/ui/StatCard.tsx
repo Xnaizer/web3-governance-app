@@ -46,11 +46,11 @@ export function StatCard({
   to,
 }: Props) {
   const inner = (
-    <div className="flex items-start gap-3 p-5">
+    <div className="flex items-start gap-2.5 p-3.5 sm:gap-3 sm:p-5">
       {icon && (
         <span
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center text-2xl",
+            "flex h-8 w-8 shrink-0 items-center justify-center text-xl sm:h-10 sm:w-10 sm:text-2xl",
             ICON_TONE[tone],
           )}
         >
@@ -58,19 +58,19 @@ export function StatCard({
         </span>
       )}
       <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]">
           {label}
         </p>
         <p
           className={cn(
-            "mt-1 font-display text-2xl font-semibold leading-tight",
+            "mt-1 font-display text-lg font-semibold leading-tight sm:text-2xl",
             TONE[tone],
           )}
         >
           {value}
         </p>
         {hint && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 truncate text-[10px] text-muted-foreground sm:text-xs">
             {hint}
           </p>
         )}

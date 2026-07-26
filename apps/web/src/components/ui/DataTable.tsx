@@ -82,7 +82,7 @@ export function DataTable<T>({
             <TableRow className="border-black/5 hover:bg-transparent">
               <TableCell
                 colSpan={columns.length}
-                className="py-12 text-center text-muted-foreground"
+                className="py-8 text-center text-sm text-muted-foreground sm:py-12"
               >
                 {emptyText}
               </TableCell>

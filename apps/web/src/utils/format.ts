@@ -1,3 +1,15 @@
+import { VOTE_DURATION_MS } from "@repo/shared";
+
+export function sumAmounts(amounts: (string | null | undefined)[]): bigint {
+  return amounts.reduce<bigint>((acc, a) => {
+    try {
+      return acc + (a ? BigInt(a) : 0n);
+    } catch {
+      return acc;
+    }
+  }, 0n);
+}
+
 export function formatIDR(amount: string | null | undefined): string {
   if (!amount) return "-";
 
@@ -28,9 +40,6 @@ export function formatDate(iso: string | null | undefined): string {
   });
 }
 
-
-export const VOTE_DURATION_DAYS = 7;
-
 export function voteDeadlineInfo(startIso: string | null | undefined): {
   deadline: Date | null;
   deadlineStr: string;
@@ -41,7 +50,7 @@ export function voteDeadlineInfo(startIso: string | null | undefined): {
     return { deadline: null, deadlineStr: "—", daysLeft: 0, expired: false };
   }
   const start = new Date(startIso);
-  const deadline = new Date(start.getTime() + VOTE_DURATION_DAYS * 86_400_000);
+  const deadline = new Date(start.getTime() + VOTE_DURATION_MS);
   const msLeft = deadline.getTime() - Date.now();
   const daysLeft = Math.ceil(msLeft / 86_400_000);
   return {

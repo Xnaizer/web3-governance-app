@@ -47,6 +47,17 @@ export async function updateProfile(input: UpdateProfileInput) {
   return res.data.data;
 }
 
+export async function resendVerification(
+  email: string,
+  turnstileToken?: string,
+) {
+  const res = await api.post<Envelope<string>>("/auth/resend-verification", {
+    email,
+    turnstileToken,
+  });
+  return res.data.data;
+}
+
 export async function forgotPassword(email: string, turnstileToken?: string) {
   const res = await api.post<Envelope<string>>("/auth/forgot-password", {
     email,
